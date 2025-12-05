@@ -43,6 +43,21 @@ app.get("/", async (req, res) => {
   }
 });
 
+app.get("/random-photos", async (req, res) => {
+  const { data, error } = await supabase
+    .from("photo")
+    .select("url")
+    .order("random()")
+    .limit(12);
+
+  if (error) return res.status(500).json({ error });
+
+  res.json(data);
+});
+
+
+
+
 // Démarrer le serveur
 app.listen(port, () => {
   console.log("Backend lancé sur Render ou en local.");
