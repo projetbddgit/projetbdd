@@ -14,15 +14,17 @@ const supabase = createClient(
 // Route de test : vérifie la connexion à Supabase
 app.get("/", async (req, res) => {
   try {
-    // Appel très simple pour vérifier l’accès
-    const { data, error } = await supabase.from("pg_tables").select("tablename").limit(1);
+    const { data, error } = await supabase
+      .from("auth.users")
+      .select("id")
+      .limit(1);
 
     if (error) {
       console.error(error);
-      return res.status(500).json({ 
-        success: false, 
-        message: "Connexion échouée ❌", 
-        error 
+      return res.status(500).json({
+        success: false,
+        message: "Connexion échouée ❌",
+        error
       });
     }
 
@@ -33,10 +35,10 @@ app.get("/", async (req, res) => {
     });
 
   } catch (err) {
-    return res.status(500).json({ 
-      success: false, 
-      message: "Erreur serveur", 
-      err 
+    return res.status(500).json({
+      success: false,
+      message: "Erreur serveur",
+      err
     });
   }
 });
