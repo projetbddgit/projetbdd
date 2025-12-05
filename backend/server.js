@@ -1,28 +1,47 @@
+require("dotenv").config();
 const express = require("express");
 const { createClient } = require("@supabase/supabase-js");
+
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Middleware pour JSON
-app.use(express.json());
+// Connexion à Supabase
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_KEY
+);
 
-// Connecte à Supabase
-const supabaseUrl = "https://TON-PROJET.supabase.co";
-const supabaseKey = "TON-API-KEY"; // Garde-le secret ! (voir .env)
-const supabase = createClient(supabaseUrl, supabaseKey);
+// Route de test : vérifie la connexion à Supabase
+app.get("/test-supabase", async (req, res) => {
+  try {
+    // Appel très simple pour vérifier l’accès
+    const { data, error } = await supabase.from("pg_tables").select("tablename").limit(1);
 
-// Exemple route
-app.get("/", (req, res) => {
-  res.send("Hello backend + Supabase !");
+    if (error) {
+      console.error(error);
+      return res.status(500).json({ 
+        success: false, 
+        message: "Connexion échouée ❌", 
+        error 
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: "Connexion Supabase OK ✔️",
+      data
+    });
+
+  } catch (err) {
+    return res.status(500).json({ 
+      success: false, 
+      message: "Erreur serveur", 
+      err 
+    });
+  }
 });
 
-// Exemple route API
-app.get("/data", async (req, res) => {
-  const { data, error } = await supabase.from("ta_table").select("*");
-  if (error) return res.status(500).json({ error });
-  res.json(data);
-});
-
+// Démarrer le serveur
 app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
+  console.log("Backend lancé sur Render ou en local.");
 });
