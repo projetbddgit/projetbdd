@@ -15,8 +15,8 @@ const supabase = createClient(
 app.get("/", async (req, res) => {
   try {
     const { data, error } = await supabase
-      .from("auth.users")
-      .select("id")
+      .from("materiel")
+      .select("modele_mat")
       .limit(1);
 
     if (error) {
