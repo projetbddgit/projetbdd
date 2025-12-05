@@ -1,31 +1,32 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <title>Test Render</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f3f3f3;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
-        .box {
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            text-align: center;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Accueil</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
+
 <body>
-    <div class="box">
-        <h1>Hello Render !</h1>
-        <p>Si tu vois cette page, ton déploiement fonctionne 🎉</p>
-    </div>
+  <div class="container">
+    <!-- SIDEBAR -->
+    <nav class="sidebar">
+      <h2>Menu</h2>
+      <ul>
+        <li><a href="/">🏠 Accueil</a></li>
+        <li><a href="/galerie">🖼 Galerie</a></li>
+        <li><a href="/stats">📊 Statistiques</a></li>
+        <li><a href="/profil">👤 Profil</a></li>
+      </ul>
+    </nav>
+
+    <!-- MAIN CONTENT -->
+    <main class="content">
+      <h1>Photos aléatoires</h1>
+      <div id="gallery" class="gallery"></div>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
 </body>
 </html>
