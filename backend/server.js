@@ -12,7 +12,7 @@ const supabase = createClient(
 );
 
 // Route de test : vérifie la connexion à Supabase
-app.get("/test-supabase", async (req, res) => {
+app.get("/", async (req, res) => {
   try {
     // Appel très simple pour vérifier l’accès
     const { data, error } = await supabase.from("pg_tables").select("tablename").limit(1);
