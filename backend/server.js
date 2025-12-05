@@ -7,29 +7,26 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // ---------------------------
-//    CONNEXION SUPABASE
+//   CONNECT SUPABASE
 // ---------------------------
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_KEY
 );
 
-if (!process.env.SUPABASE_URL || !process.env.SUPABASE_KEY) {
-  console.error("❌ ERREUR : Variables SUPABASE manquantes.");
-  process.exit(1);
-}
-
 // ---------------------------
-//     SERVE FRONTEND
+//   SERVE FRONTEND
 // ---------------------------
 const frontendPath = path.join(__dirname, "..", "frontend");
-app.use(express.static(frontendPath));
+
+app.use(express.static(frontendPath)); 
+// Sert index.html, styles.css, script.js… automatiquement
 
 // ---------------------------
-//         ROUTES API
+//          API
 // ---------------------------
 
-// Test Supabase
+// Test Supabase (ATTENTION: plus sur /)
 app.get("/api/test-supabase", async (req, res) => {
   try {
     const { data, error } = await supabase
@@ -37,24 +34,11 @@ app.get("/api/test-supabase", async (req, res) => {
       .select("modele_mat")
       .limit(1);
 
-    if (error) return res.status(500).json({
-      success: false,
-      message: "Connexion échouée ❌",
-      error
-    });
+    if (error) return res.status(500).json({ success: false, error });
 
-    res.json({
-      success: true,
-      message: "Connexion Supabase OK ✔️",
-      data
-    });
-
+    res.json({ success: true, data });
   } catch (err) {
-    res.status(500).json({
-      success: false,
-      message: "Erreur backend",
-      err
-    });
+    res.status(500).json({ success: false, err });
   }
 });
 
@@ -72,15 +56,15 @@ app.get("/api/random-photos", async (req, res) => {
 });
 
 // ---------------------------
-//   CATCH-ALL → FRONTEND
+//   CATCH-ALL (Doit être après API)
 // ---------------------------
 app.get("*", (req, res) => {
   res.sendFile(path.join(frontendPath, "index.html"));
 });
 
 // ---------------------------
-//     START SERVER
+//   START SERVER
 // ---------------------------
 app.listen(PORT, () => {
-  console.log(`🚀 Backend lancé sur http://localhost:${PORT}`);
+  console.log(`🚀 Backend running on port ${PORT}`);
 });
