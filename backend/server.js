@@ -1,9 +1,21 @@
 require("dotenv").config();
 const express = require("express");
-const { createClient } = require("@supabase/supabase-js");
+const path = require("path");
 
 const app = express();
-const port = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3000;
+
+// Dossier du frontend
+const frontendPath = path.join(__dirname, "..", "frontend");
+
+// On sert tous les fichiers statiques (index.html, CSS, JS, images…)
+app.use(express.static(frontendPath));
+
+// Si aucune route ne correspond, on renvoie index.html (utile pour les SPAs)
+app.get("*", (req, res) => {
+  res.sendFile(path.join(frontendPath, "index.html"));
+});
+
 
 // Connexion à Supabase
 const supabase = createClient(
