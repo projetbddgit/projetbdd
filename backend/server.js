@@ -1,61 +1,65 @@
 require("dotenv").config();
 const express = require("express");
 const path = require("path");
+const { createClient } = require("@supabase/supabase-js");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Dossier du frontend
-const frontendPath = path.join(__dirname, "..", "frontend");
-
-// On sert tous les fichiers statiques (index.html, CSS, JS, images…)
-app.use(express.static(frontendPath));
-
-// Si aucune route ne correspond, on renvoie index.html (utile pour les SPAs)
-app.get("*", (req, res) => {
-  res.sendFile(path.join(frontendPath, "index.html"));
-});
-
-
-// Connexion à Supabase
+// ---------------------------
+//    CONNEXION SUPABASE
+// ---------------------------
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_KEY
 );
 
-// Route de test : vérifie la connexion à Supabase
-app.get("/", async (req, res) => {
+if (!process.env.SUPABASE_URL || !process.env.SUPABASE_KEY) {
+  console.error("❌ ERREUR : Variables SUPABASE manquantes.");
+  process.exit(1);
+}
+
+// ---------------------------
+//     SERVE FRONTEND
+// ---------------------------
+const frontendPath = path.join(__dirname, "..", "frontend");
+app.use(express.static(frontendPath));
+
+// ---------------------------
+//         ROUTES API
+// ---------------------------
+
+// Test Supabase
+app.get("/api/test-supabase", async (req, res) => {
   try {
     const { data, error } = await supabase
       .from("materiel")
       .select("modele_mat")
       .limit(1);
 
-    if (error) {
-      console.error(error);
-      return res.status(500).json({
-        success: false,
-        message: "Connexion échouée ❌",
-        error
-      });
-    }
+    if (error) return res.status(500).json({
+      success: false,
+      message: "Connexion échouée ❌",
+      error
+    });
 
-    return res.json({
+    res.json({
       success: true,
       message: "Connexion Supabase OK ✔️",
       data
     });
 
   } catch (err) {
-    return res.status(500).json({
+    res.status(500).json({
       success: false,
-      message: "Erreur serveur",
+      message: "Erreur backend",
       err
     });
   }
 });
 
-app.get("/random-photos", async (req, res) => {
+// Random photos
+app.get("/api/random-photos", async (req, res) => {
   const { data, error } = await supabase
     .from("photo")
     .select("url")
@@ -67,10 +71,16 @@ app.get("/random-photos", async (req, res) => {
   res.json(data);
 });
 
+// ---------------------------
+//   CATCH-ALL → FRONTEND
+// ---------------------------
+app.get("*", (req, res) => {
+  res.sendFile(path.join(frontendPath, "index.html"));
+});
 
-
-
-// Démarrer le serveur
-app.listen(port, () => {
-  console.log("Backend lancé sur Render ou en local.");
+// ---------------------------
+//     START SERVER
+// ---------------------------
+app.listen(PORT, () => {
+  console.log(`🚀 Backend lancé sur http://localhost:${PORT}`);
 });
