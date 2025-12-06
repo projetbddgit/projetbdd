@@ -52,7 +52,7 @@ app.get("/api/random-photos", async (req, res) => {
     }
 
     // 2. On veut 12 photos uniques (ou moins si la BDD en a moins)
-    const photosCount = Math.min(12, count);
+    const photosCount = Math.min(2, count);
     const offsets = new Set();
 
     while (offsets.size < photosCount) {
