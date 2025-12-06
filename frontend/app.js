@@ -1,6 +1,6 @@
 async function loadImages() {
   try {
-    const res = await fetch("/random-photos");
+    const res = await fetch("/api/random-photos");
     const photos = await res.json();
 
     const gallery = document.getElementById("gallery");
