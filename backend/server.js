@@ -15,18 +15,10 @@ const supabase = createClient(
 );
 
 // ---------------------------
-//   SERVE FRONTEND
-// ---------------------------
-const frontendPath = path.join(__dirname, "..", "frontend");
-
-app.use(express.static(frontendPath)); 
-// Sert index.html, styles.css, script.js… automatiquement
-
-// ---------------------------
 //          API
 // ---------------------------
 
-// Test Supabase (ATTENTION: plus sur /)
+// 🧪 Test Supabase
 app.get("/api/test-supabase", async (req, res) => {
   try {
     const { data, error } = await supabase
@@ -42,10 +34,10 @@ app.get("/api/test-supabase", async (req, res) => {
   }
 });
 
-// Random photos
+// 🎲 API : Photos aléatoires
 app.get("/api/random-photos", async (req, res) => {
   try {
-    // 1. Compter le nombre total d’images
+    // 1. Compter les photos
     const { count, error: countError } = await supabase
       .from("photo")
       .select("*", { count: "exact", head: true });
@@ -55,35 +47,35 @@ app.get("/api/random-photos", async (req, res) => {
       return res.status(500).json({ error: countError });
     }
 
-    if (count === 0) {
+    if (!count || count === 0) {
       return res.json([]);
     }
 
-    // 2. Générer 12 offsets aléatoires SANS DOUBLONS
-    const maxPhotos = Math.min(2, count); 
+    // 2. On veut 12 photos uniques (ou moins si la BDD en a moins)
+    const photosCount = Math.min(12, count);
     const offsets = new Set();
 
-    while (offsets.size < maxPhotos) {
+    while (offsets.size < photosCount) {
       offsets.add(Math.floor(Math.random() * count));
     }
 
-    offsetsArray = [...offsets];
+    const offsetsArray = [...offsets];
 
-    // 3. Récupérer les images une par une
+    // 3. Récupération
     const results = [];
 
     for (let offset of offsetsArray) {
       const { data, error } = await supabase
         .from("photo")
         .select("url")
-        .range(offset, offset); // équivalent de offset offset limit 1
+        .range(offset, offset);
 
       if (error) {
         console.error(error);
         return res.status(500).json({ error });
       }
 
-      if (data && data.length > 0) {
+      if (data?.length > 0) {
         results.push(data[0]);
       }
     }
@@ -91,12 +83,23 @@ app.get("/api/random-photos", async (req, res) => {
     res.json(results);
 
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: err });
   }
 });
 
+
 // ---------------------------
-//   CATCH-ALL (Doit être après API)
+//   SERVE FRONTEND
+// ---------------------------
+const frontendPath = path.join(__dirname, "..", "frontend");
+
+// Sert les fichiers statiques (index.html, style.css, app.js…)
+app.use(express.static(frontendPath));
+
+
+// ---------------------------
+//   CATCH-ALL (pour SPA)
 // ---------------------------
 app.get("*", (req, res) => {
   res.sendFile(path.join(frontendPath, "index.html"));
