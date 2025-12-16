@@ -9,6 +9,7 @@
   <main>
     <h1>Application Photo</h1>
 
+    <!-- AJOUT CLIENT -->
     <h2>Ajouter un client</h2>
     <form id="client-form">
       <input id="nom" placeholder="Nom *" required />
@@ -17,26 +18,31 @@
       <button type="submit">Ajouter</button>
     </form>
 
-    <h2>Recherche client</h2>
+    <!-- RECHERCHE CLIENT -->
+    <h2>Recherche client par nom</h2>
     <input id="search-name" placeholder="Nom" />
     <button id="search-btn">Rechercher</button>
     <pre id="client-result"></pre>
 
+    <!-- AJOUT IMAGE -->
     <h2>Ajouter une image</h2>
     <form id="photo-form" enctype="multipart/form-data">
-      <input id="photo-file" type="file" accept="image/*" />
-      <input id="photo-url" placeholder="URL image (optionnel)" />
+      <input id="photo-file" type="file" accept="image/*" required />
       <label>Flash <input type="checkbox" id="photo-flash" /></label>
       <button type="submit">Ajouter l’image</button>
     </form>
 
+    <!-- PHOTO ALÉATOIRE -->
     <h2>Photo aléatoire</h2>
     <div id="gallery"></div>
 
+    <!-- RECHERCHE COMMANDE -->
     <h2>Recherche commande</h2>
-    <input id="cmd-id" placeholder="ID commande" />
+    <h3>Par ID de commande</h3>
+    <input id="cmd-id" placeholder="Numéro de commande" />
     <button id="search-cmd-id">Rechercher</button>
 
+    <h3>Par ID client</h3>
     <input id="cmd-client-id" placeholder="ID client" />
     <button id="search-cmd-client">Rechercher</button>
 

@@ -1,5 +1,5 @@
 // ---------------------------
-// Convertit lien Google Drive en lien direct
+// Convertit lien Google Drive en lien direct (CONSERVÉ, même si plus utilisé)
 // ---------------------------
 function toDirectDriveUrl(url) {
   const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
@@ -10,21 +10,25 @@ function toDirectDriveUrl(url) {
 }
 
 // ---------------------------
-// Photo aléatoire
+// Photo aléatoire (Supabase bucket)
 // ---------------------------
 async function loadImages() {
-  const res = await fetch("/api/random-photos");
-  const photos = await res.json();
+  try {
+    const res = await fetch("/api/random-photos");
+    const photos = await res.json();
 
-  const gallery = document.getElementById("gallery");
-  gallery.innerHTML = "";
+    const gallery = document.getElementById("gallery");
+    gallery.innerHTML = "";
 
-  photos.forEach(photo => {
-    const img = document.createElement("img");
-    img.src = toDirectDriveUrl(photo.url);
-    img.width = 300;
-    gallery.appendChild(img);
-  });
+    photos.forEach(photo => {
+      const img = document.createElement("img");
+      img.src = photo.url; // lien public Supabase
+      img.width = 300;
+      gallery.appendChild(img);
+    });
+  } catch (err) {
+    console.error("Erreur chargement photos :", err);
+  }
 }
 
 // ---------------------------
@@ -43,55 +47,63 @@ document.getElementById("client-form").addEventListener("submit", async e => {
     body: JSON.stringify({ nom, mail, poste })
   });
 
-  if (!res.ok) return alert("Erreur ajout client");
-  alert("Client ajouté");
+  const data = await res.json();
+  if (!res.ok) {
+    alert("❌ Erreur : " + data.error);
+    return;
+  }
+
+  alert("✅ Client ajouté avec succès");
   e.target.reset();
 });
 
 // ---------------------------
-// Recherche client
+// Recherche client par nom
 // ---------------------------
 document.getElementById("search-btn").addEventListener("click", async () => {
   const nom = document.getElementById("search-name").value;
   const res = await fetch(`/api/clients?nom=${encodeURIComponent(nom)}`);
   const data = await res.json();
+
+  if (!res.ok) {
+    alert("❌ Erreur : " + data.error);
+    return;
+  }
+
   document.getElementById("client-result").textContent =
     JSON.stringify(data, null, 2);
 });
 
 // ---------------------------
-// Ajouter photo (URL + upload)
+// Ajouter photo (UPLOAD FICHIER)
 // ---------------------------
 document.getElementById("photo-form").addEventListener("submit", async e => {
   e.preventDefault();
 
   const fileInput = document.getElementById("photo-file");
-  const urlInput = document.getElementById("photo-url");
   const flash = document.getElementById("photo-flash").checked;
 
+  if (!fileInput.files.length) {
+    alert("❌ Sélectionne une image");
+    return;
+  }
+
   const formData = new FormData();
+  formData.append("image", fileInput.files[0]);
   formData.append("flash", flash);
-
-  if (fileInput.files.length) {
-    formData.append("image", fileInput.files[0]);
-  }
-
-  if (urlInput.value.trim()) {
-    formData.append("url", toDirectDriveUrl(urlInput.value.trim()));
-  }
-
-  if (!fileInput.files.length && !urlInput.value.trim()) {
-    return alert("Fichier ou URL requis");
-  }
 
   const res = await fetch("/api/photo", {
     method: "POST",
     body: formData
   });
 
-  if (!res.ok) return alert("Erreur ajout image");
+  const data = await res.json();
+  if (!res.ok) {
+    alert("❌ Erreur : " + data.error);
+    return;
+  }
 
-  alert("Image ajoutée");
+  alert("✅ Photo ajoutée");
   e.target.reset();
   loadImages();
 });
@@ -101,8 +113,14 @@ document.getElementById("photo-form").addEventListener("submit", async e => {
 // ---------------------------
 document.getElementById("search-cmd-id").addEventListener("click", async () => {
   const id = document.getElementById("cmd-id").value;
+
   const res = await fetch(`/api/commande/${id}`);
   const data = await res.json();
+  if (!res.ok) {
+    alert("❌ Erreur : " + data.error);
+    return;
+  }
+
   document.getElementById("commande-result").textContent =
     JSON.stringify(data, null, 2);
 });
@@ -112,11 +130,19 @@ document.getElementById("search-cmd-id").addEventListener("click", async () => {
 // ---------------------------
 document.getElementById("search-cmd-client").addEventListener("click", async () => {
   const id = document.getElementById("cmd-client-id").value;
+
   const res = await fetch(`/api/commandes?id_client=${id}`);
   const data = await res.json();
+  if (!res.ok) {
+    alert("❌ Erreur : " + data.error);
+    return;
+  }
+
   document.getElementById("commande-result").textContent =
     JSON.stringify(data, null, 2);
 });
 
+// ---------------------------
+// Init
 // ---------------------------
 loadImages();
