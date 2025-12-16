@@ -1,4 +1,15 @@
 // ---------------------------
+// Convertit lien Google Drive en lien direct
+// ---------------------------
+function toDirectDriveUrl(url) {
+  const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+  if (match && match[1]) {
+    return `https://drive.google.com/uc?export=view&id=${match[1]}`;
+  }
+  return url;
+}
+
+// ---------------------------
 // Photo aléatoire
 // ---------------------------
 async function loadImages() {
@@ -11,7 +22,7 @@ async function loadImages() {
 
     photos.forEach(photo => {
       const img = document.createElement("img");
-      img.src = photo.url;
+      img.src = toDirectDriveUrl(photo.url); // conversion pour Google Drive
       img.width = 300;
       gallery.appendChild(img);
     });
@@ -37,7 +48,6 @@ document.getElementById("client-form").addEventListener("submit", async e => {
   });
 
   const data = await res.json();
-
   if (!res.ok) {
     alert("❌ Erreur : " + data.error);
     return;
@@ -70,7 +80,7 @@ document.getElementById("search-btn").addEventListener("click", async () => {
 document.getElementById("photo-form").addEventListener("submit", async e => {
   e.preventDefault();
 
-  const url = document.getElementById("photo-url").value;
+  const url = toDirectDriveUrl(document.getElementById("photo-url").value);
   const flash = document.getElementById("photo-flash").checked;
 
   const res = await fetch("/api/photo", {
@@ -80,7 +90,6 @@ document.getElementById("photo-form").addEventListener("submit", async e => {
   });
 
   const data = await res.json();
-
   if (!res.ok) {
     alert("❌ Erreur : " + data.error);
     return;
@@ -99,7 +108,6 @@ document.getElementById("search-cmd-id").addEventListener("click", async () => {
 
   const res = await fetch(`/api/commande/${id}`);
   const data = await res.json();
-
   if (!res.ok) {
     alert("❌ Erreur : " + data.error);
     return;
@@ -117,7 +125,6 @@ document.getElementById("search-cmd-client").addEventListener("click", async () 
 
   const res = await fetch(`/api/commandes?id_client=${id}`);
   const data = await res.json();
-
   if (!res.ok) {
     alert("❌ Erreur : " + data.error);
     return;
