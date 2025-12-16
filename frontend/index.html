@@ -7,13 +7,12 @@
 
 <body>
   <main>
-
     <h1>Application Photo</h1>
 
     <!-- AJOUT CLIENT -->
     <h2>Ajouter un client</h2>
     <form id="client-form">
-      <input id="nom" placeholder="Nom" required />
+      <input id="nom" placeholder="Nom *" required />
       <input id="mail" placeholder="Email" />
       <input id="poste" placeholder="Code postal" />
       <button type="submit">Ajouter</button>
@@ -25,9 +24,20 @@
     <button id="search-btn">Rechercher</button>
     <pre id="client-result"></pre>
 
+    <!-- AJOUT IMAGE -->
+    <h2>Ajouter une image</h2>
+    <form id="photo-form">
+      <input id="photo-url" placeholder="URL de l'image" required />
+      <label>Flash <input type="checkbox" id="photo-flash" /></label>
+      <button type="submit">Ajouter l’image</button>
+    </form>
+
+    <!-- PHOTO ALÉATOIRE -->
+    <h2>Photo aléatoire</h2>
+    <div id="gallery"></div>
+
     <!-- RECHERCHE COMMANDE -->
     <h2>Recherche commande</h2>
-
     <h3>Par ID de commande</h3>
     <input id="cmd-id" placeholder="Numéro de commande" />
     <button id="search-cmd-id">Rechercher</button>
@@ -37,21 +47,6 @@
     <button id="search-cmd-client">Rechercher</button>
 
     <pre id="commande-result"></pre>
-
-    <!-- AJOUT IMAGE -->
-    <h2>Ajouter une image</h2>
-    <form id="photo-form">
-      <input id="photo-url" placeholder="URL de l'image" required />
-      <label>
-        Flash <input type="checkbox" id="photo-flash" />
-      </label>
-      <button type="submit">Ajouter l’image</button>
-    </form>
-
-    <!-- PHOTO ALÉATOIRE -->
-    <h2>Photo aléatoire</h2>
-    <div id="gallery"></div>
-
   </main>
 
   <script src="app.js"></script>
