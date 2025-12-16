@@ -1,63 +1,75 @@
 // ---------------------------
-//  Charger les photos
+// Charger une photo aléatoire
 // ---------------------------
 async function loadImages() {
-  try {
-    const res = await fetch("/api/random-photos");
-    const photos = await res.json();
+  const res = await fetch("/api/random-photos");
+  const photos = await res.json();
 
-    const gallery = document.getElementById("gallery");
-    gallery.innerHTML = "";
+  const gallery = document.getElementById("gallery");
+  gallery.innerHTML = "";
 
-    photos.forEach(photo => {
-      const img = document.createElement("img");
-      img.src = photo.url;
-      img.alt = "Photo aléatoire";
-      gallery.appendChild(img);
-    });
-  } catch (err) {
-    console.error("Erreur de chargement :", err);
-  }
+  photos.forEach(photo => {
+    const img = document.createElement("img");
+    img.src = photo.url;
+    img.width = 300;
+    gallery.appendChild(img);
+  });
 }
 
 // ---------------------------
-//  Ajouter un client
+// Ajouter un client
 // ---------------------------
-const form = document.getElementById("client-form");
-
-form.addEventListener("submit", async (e) => {
+document.getElementById("client-form").addEventListener("submit", async e => {
   e.preventDefault();
 
   const nom = document.getElementById("nom").value;
   const mail = document.getElementById("mail").value;
   const poste = document.getElementById("poste").value;
 
-  try {
-    const res = await fetch("/api/client", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ nom, mail, poste })
-    });
+  await fetch("/api/client", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ nom, mail, poste })
+  });
 
-    const data = await res.json();
-
-    if (!res.ok) {
-      alert("Erreur lors de l'ajout du client");
-      console.error(data);
-      return;
-    }
-
-    alert("Client ajouté avec succès !");
-    form.reset();
-
-  } catch (err) {
-    console.error("Erreur :", err);
-  }
+  alert("Client ajouté");
+  e.target.reset();
 });
 
 // ---------------------------
-//  Initialisation
+// Recherche client par nom
+// ---------------------------
+document.getElementById("search-btn").addEventListener("click", async () => {
+  const nom = document.getElementById("search-name").value;
+
+  const res = await fetch(`/api/clients?nom=${encodeURIComponent(nom)}`);
+  const data = await res.json();
+
+  document.getElementById("client-result").textContent =
+    JSON.stringify(data, null, 2);
+});
+
+// ---------------------------
+// Ajouter une image
+// ---------------------------
+document.getElementById("photo-form").addEventListener("submit", async e => {
+  e.preventDefault();
+
+  const url = document.getElementById("photo-url").value;
+  const flash = document.getElementById("photo-flash").checked;
+
+  await fetch("/api/photo", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ url, flash })
+  });
+
+  alert("Image ajoutée");
+  e.target.reset();
+  loadImages();
+});
+
+// ---------------------------
+// Initialisation
 // ---------------------------
 loadImages();

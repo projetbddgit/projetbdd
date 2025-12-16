@@ -3,55 +3,54 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Accueil</title>
+  <title>Application Photo</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 
 <body>
   <div class="container">
-    <!-- SIDEBAR -->
-    <nav class="sidebar">
-      <h2>Menu</h2>
-      <ul>
-        <li><a href="/">🏠 Accueil</a></li>
-        <li><a href="/galerie">🖼 Galerie</a></li>
-        <li><a href="/stats">📊 Statistiques</a></li>
-        <li><a href="/profil">👤 Profil</a></li>
-      </ul>
-    </nav>
 
-    <!-- MAIN CONTENT -->
     <main class="content">
-      <h1>Photos aléatoires</h1>
+      <h1>Application Photo</h1>
 
-      <!-- FORMULAIRE AJOUT CLIENT -->
-      <h2>Ajouter un client</h2>
+      <!-- AJOUT CLIENT -->
+      <section>
+        <h2>Ajouter un client</h2>
+        <form id="client-form">
+          <input type="text" id="nom" placeholder="Nom" required />
+          <input type="email" id="mail" placeholder="Email" />
+          <input type="text" id="poste" placeholder="Code postal" />
+          <button type="submit">Ajouter</button>
+        </form>
+      </section>
 
-      <form id="client-form">
-        <input
-          type="text"
-          id="nom"
-          placeholder="Nom du client"
-          required
-        />
+      <!-- RECHERCHE CLIENT -->
+      <section>
+        <h2>Rechercher un client par nom</h2>
+        <input type="text" id="search-name" placeholder="Nom recherché" />
+        <button id="search-btn">Rechercher</button>
+        <pre id="client-result"></pre>
+      </section>
 
-        <input
-          type="email"
-          id="mail"
-          placeholder="Email (optionnel)"
-        />
-
-        <input
-          type="text"
-          id="poste"
-          placeholder="Code postal (optionnel)"
-        />
-
-        <button type="submit">Ajouter</button>
-      </form>
+      <!-- AJOUT IMAGE -->
+      <section>
+        <h2>Ajouter une image</h2>
+        <form id="photo-form">
+          <input type="text" id="photo-url" placeholder="URL de l'image" required />
+          <label>
+            Flash
+            <input type="checkbox" id="photo-flash" />
+          </label>
+          <button type="submit">Ajouter l’image</button>
+        </form>
+      </section>
 
       <!-- GALERIE -->
-      <div id="gallery" class="gallery"></div>
+      <section>
+        <h2>Photo aléatoire</h2>
+        <div id="gallery" class="gallery"></div>
+      </section>
+
     </main>
   </div>
 
