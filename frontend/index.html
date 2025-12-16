@@ -23,6 +23,34 @@
     <!-- MAIN CONTENT -->
     <main class="content">
       <h1>Photos aléatoires</h1>
+
+      <!-- FORMULAIRE AJOUT CLIENT -->
+      <h2>Ajouter un client</h2>
+
+      <form id="client-form">
+        <input
+          type="text"
+          id="nom"
+          placeholder="Nom du client"
+          required
+        />
+
+        <input
+          type="email"
+          id="mail"
+          placeholder="Email (optionnel)"
+        />
+
+        <input
+          type="text"
+          id="poste"
+          placeholder="Code postal (optionnel)"
+        />
+
+        <button type="submit">Ajouter</button>
+      </form>
+
+      <!-- GALERIE -->
       <div id="gallery" class="gallery"></div>
     </main>
   </div>
