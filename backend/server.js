@@ -1,182 +1,124 @@
-require("dotenv").config();
-const express = require("express");
-const path = require("path");
-const fs = require("fs");
-const multer = require("multer"); // pour gérer l'upload de fichiers
-const { createClient } = require("@supabase/supabase-js");
+import express from "express";
+import multer from "multer";
+import pg from "pg";
+import { createClient } from "@supabase/supabase-js";
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+app.use(express.json());
 
-// ---------------------------
-//   CONNECT SUPABASE
-// ---------------------------
+const upload = multer({ storage: multer.memoryStorage() });
+
+const pool = new pg.Pool({
+  connectionString: process.env.DATABASE_URL
+});
+
 const supabase = createClient(
   process.env.SUPABASE_URL,
-  process.env.SUPABASE_KEY
+  process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
 // ---------------------------
-//   MIDDLEWARE
+// AJOUT CLIENT
 // ---------------------------
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-// Config multer pour upload temporaire
-const upload = multer({ dest: "tmp/" });
-
-// ---------------------------
-//          API
-// ---------------------------
-
-// 🧪 Test Supabase
-app.get("/api/test-supabase", async (req, res) => {
+app.post("/api/client", async (req, res) => {
+  const { nom, mail, poste } = req.body;
   try {
-    const { data, error } = await supabase
-      .from("materiel")
-      .select("modele_mat")
-      .limit(1);
-
-    if (error) return res.status(500).json({ success: false, error });
-
-    res.json({ success: true, data });
+    const result = await pool.query(
+      "INSERT INTO client (nom, mail, poste) VALUES ($1,$2,$3) RETURNING *",
+      [nom, mail, poste]
+    );
+    res.json(result.rows[0]);
   } catch (err) {
-    res.status(500).json({ success: false, err });
+    res.status(500).json({ error: err.message });
   }
 });
 
-// 🎲 API : Photos aléatoires
-app.get("/api/random-photos", async (req, res) => {
+// ---------------------------
+// RECHERCHE CLIENT PAR NOM
+// ---------------------------
+app.get("/api/clients", async (req, res) => {
   try {
-    const { count, error: countError } = await supabase
-      .from("photo")
-      .select("*", { count: "exact", head: true });
+    const result = await pool.query(
+      "SELECT * FROM client WHERE nom ILIKE $1",
+      [`%${req.query.nom}%`]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
-    if (countError) return res.status(500).json({ error: countError });
-    if (!count || count === 0) return res.json([]);
+// ---------------------------
+// AJOUT PHOTO (URL OU UPLOAD)
+// ---------------------------
+app.post("/api/photo", upload.single("image"), async (req, res) => {
+  try {
+    let imageUrl = req.body.url || null;
 
-    const photosCount = Math.min(12, count); // jusqu'à 12 photos
-    const offsets = new Set();
-    while (offsets.size < photosCount) offsets.add(Math.floor(Math.random() * count));
+    // CAS 1 : upload fichier → Supabase Storage
+    if (req.file) {
+      const fileName = `${Date.now()}_${req.file.originalname}`;
 
-    const results = [];
-    for (let offset of offsets) {
-      const { data, error } = await supabase
-        .from("photo")
-        .select("url")
-        .range(offset, offset);
+      const { error } = await supabase.storage
+        .from("photos_bucket")
+        .upload(fileName, req.file.buffer, {
+          contentType: req.file.mimetype
+        });
 
-      if (error) return res.status(500).json({ error });
-      if (data?.length > 0) results.push(data[0]);
+      if (error) throw error;
+
+      const { data } = supabase.storage
+        .from("photos_bucket")
+        .getPublicUrl(fileName);
+
+      imageUrl = data.publicUrl;
     }
 
-    res.json(results);
+    if (!imageUrl) {
+      return res.status(400).json({ error: "Aucune image fournie" });
+    }
+
+    await pool.query(
+      "INSERT INTO image (url, flash) VALUES ($1,$2)",
+      [imageUrl, req.body.flash === "true"]
+    );
+
+    res.json({ success: true, url: imageUrl });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: err });
-  }
-});
-
-// ➕ API : Ajouter un client
-app.post("/api/add-client", async (req, res) => {
-  const { nom, mail, poste } = req.body;
-  if (!nom || !mail || !poste) return res.status(400).json({ error: "Champs manquants" });
-
-  try {
-    const { data, error } = await supabase.from("client").insert([{ nom, mail, poste }]);
-    if (error) return res.status(500).json({ error });
-    res.json({ success: true, data });
-  } catch (err) {
-    res.status(500).json({ error: err });
-  }
-});
-
-// 🔍 API : Rechercher client par nom
-app.get("/api/search-client", async (req, res) => {
-  const { nom } = req.query;
-  if (!nom) return res.status(400).json({ error: "Nom requis" });
-
-  try {
-    const { data, error } = await supabase
-      .from("client")
-      .select("*")
-      .ilike("nom", `%${nom}%`);
-
-    if (error) return res.status(500).json({ error });
-    res.json(data);
-  } catch (err) {
-    res.status(500).json({ error: err });
-  }
-});
-
-// 🔍 API : Rechercher commandes
-app.get("/api/search-commandes", async (req, res) => {
-  const { num_cmd, id_client } = req.query;
-
-  try {
-    let query = supabase.from("commande").select("*");
-    if (num_cmd) query = query.eq("num_cmd", num_cmd);
-    if (id_client) query = query.eq("id_client", id_client);
-
-    const { data, error } = await query;
-    if (error) return res.status(500).json({ error });
-    res.json(data);
-  } catch (err) {
-    res.status(500).json({ error: err });
-  }
-});
-
-// 🖼 API : Upload image vers bucket
-app.post("/api/upload-photo", upload.single("photo"), async (req, res) => {
-  if (!req.file) return res.status(400).json({ error: "Fichier manquant" });
-
-  const filename = req.file.originalname;
-  const filePath = req.file.path;
-
-  try {
-    const { data: uploadData, error: uploadError } = await supabase.storage
-      .from("photos_bucket")
-      .upload(filename, fs.readFileSync(filePath), { upsert: true });
-
-    if (uploadError) throw uploadError;
-
-    const { publicUrl } = supabase.storage
-      .from("photos_bucket")
-      .getPublicUrl(filename);
-
-    // Supprimer le fichier temporaire
-    fs.unlinkSync(filePath);
-
-    // Ajouter à la table photo
-    const { data: photoData, error: dbError } = await supabase
-      .from("photo")
-      .insert([{ url: publicUrl, time_photo: new Date(), flash: true }]);
-
-    if (dbError) throw dbError;
-
-    res.json({ success: true, url: publicUrl });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: err.message || err });
+    res.status(500).json({ error: err.message });
   }
 });
 
 // ---------------------------
-//   SERVE FRONTEND
+// PHOTOS ALÉATOIRES
 // ---------------------------
-const frontendPath = path.join(__dirname, "..", "frontend");
-app.use(express.static(frontendPath));
-
-// ---------------------------
-//   CATCH-ALL (pour SPA)
-// ---------------------------
-app.get("*", (req, res) => {
-  res.sendFile(path.join(frontendPath, "index.html"));
+app.get("/api/random-photos", async (req, res) => {
+  const result = await pool.query(
+    "SELECT url FROM image ORDER BY random() LIMIT 5"
+  );
+  res.json(result.rows);
 });
 
 // ---------------------------
-//   START SERVER
+// COMMANDE PAR ID
 // ---------------------------
-app.listen(PORT, () => {
-  console.log(`🚀 Backend running on port ${PORT}`);
+app.get("/api/commande/:id", async (req, res) => {
+  const result = await pool.query(
+    "SELECT * FROM commande WHERE id = $1",
+    [req.params.id]
+  );
+  res.json(result.rows);
 });
+
+// ---------------------------
+// COMMANDES PAR CLIENT
+// ---------------------------
+app.get("/api/commandes", async (req, res) => {
+  const result = await pool.query(
+    "SELECT * FROM commande WHERE id_client = $1",
+    [req.query.id_client]
+  );
+  res.json(result.rows);
+});
+
+app.listen(3000, () => console.log("Serveur lancé sur port 3000"));
