@@ -34,13 +34,13 @@ app.get("/api/test-supabase", async (req, res) => {
   res.json(data);
 });
 
-// 🎲 Photos aléatoires
+// 🎲 Photo aléatoire
 app.get("/api/random-photos", async (req, res) => {
-  const { count, error: countError } = await supabase
+  const { count } = await supabase
     .from("photo")
     .select("*", { count: "exact", head: true });
 
-  if (countError || !count) return res.json([]);
+  if (!count) return res.json([]);
 
   const offset = Math.floor(Math.random() * count);
 
@@ -50,7 +50,6 @@ app.get("/api/random-photos", async (req, res) => {
     .range(offset, offset);
 
   if (error) return res.status(500).json({ error });
-
   res.json(data);
 });
 
@@ -68,11 +67,10 @@ app.post("/api/client", async (req, res) => {
     .select();
 
   if (error) return res.status(500).json({ error });
-
   res.status(201).json(data);
 });
 
-// 🔍 Rechercher des clients par nom
+// 🔍 Rechercher clients par nom
 app.get("/api/clients", async (req, res) => {
   const { nom } = req.query;
 
@@ -86,11 +84,10 @@ app.get("/api/clients", async (req, res) => {
     .ilike("nom", `%${nom}%`);
 
   if (error) return res.status(500).json({ error });
-
   res.json(data);
 });
 
-// 🖼️ Ajouter une image (URL)
+// 🖼️ Ajouter une image
 app.post("/api/photo", async (req, res) => {
   const { url, flash } = req.body;
 
@@ -110,8 +107,43 @@ app.post("/api/photo", async (req, res) => {
     .select();
 
   if (error) return res.status(500).json({ error });
-
   res.status(201).json(data);
+});
+
+// 📦 Recherche commande PAR ID
+app.get("/api/commande/:id", async (req, res) => {
+  const { id } = req.params;
+
+  const { data, error } = await supabase
+    .from("commande")
+    .select("*")
+    .eq("num_cmd", id)
+    .single();
+
+  if (error) {
+    return res.status(404).json({ error: "Commande introuvable" });
+  }
+
+  res.json(data);
+});
+
+// 📦 Toutes les commandes d’un client
+app.get("/api/commandes", async (req, res) => {
+  const { id_client } = req.query;
+
+  if (!id_client) {
+    return res.status(400).json({ error: "Paramètre id_client requis" });
+  }
+
+  const { data, error } = await supabase
+    .from("commande")
+    .select("*")
+    .eq("id_client", id_client)
+    .order("date_cmd", { ascending: false });
+
+  if (error) return res.status(500).json({ error });
+
+  res.json(data);
 });
 
 // ---------------------------
@@ -121,7 +153,7 @@ const frontendPath = path.join(__dirname, "..", "frontend");
 app.use(express.static(frontendPath));
 
 // ---------------------------
-//   CATCH-ALL (SPA)
+//   CATCH-ALL
 // ---------------------------
 app.get("*", (req, res) => {
   res.sendFile(path.join(frontendPath, "index.html"));

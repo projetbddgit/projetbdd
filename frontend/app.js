@@ -1,5 +1,5 @@
 // ---------------------------
-// Charger une photo aléatoire
+// Photo aléatoire
 // ---------------------------
 async function loadImages() {
   const res = await fetch("/api/random-photos");
@@ -17,7 +17,7 @@ async function loadImages() {
 }
 
 // ---------------------------
-// Ajouter un client
+// Ajouter client
 // ---------------------------
 document.getElementById("client-form").addEventListener("submit", async e => {
   e.preventDefault();
@@ -50,7 +50,33 @@ document.getElementById("search-btn").addEventListener("click", async () => {
 });
 
 // ---------------------------
-// Ajouter une image
+// Recherche commande par ID
+// ---------------------------
+document.getElementById("search-cmd-id").addEventListener("click", async () => {
+  const id = document.getElementById("cmd-id").value;
+
+  const res = await fetch(`/api/commande/${id}`);
+  const data = await res.json();
+
+  document.getElementById("commande-result").textContent =
+    JSON.stringify(data, null, 2);
+});
+
+// ---------------------------
+// Commandes par client
+// ---------------------------
+document.getElementById("search-cmd-client").addEventListener("click", async () => {
+  const id = document.getElementById("cmd-client-id").value;
+
+  const res = await fetch(`/api/commandes?id_client=${id}`);
+  const data = await res.json();
+
+  document.getElementById("commande-result").textContent =
+    JSON.stringify(data, null, 2);
+});
+
+// ---------------------------
+// Ajouter image
 // ---------------------------
 document.getElementById("photo-form").addEventListener("submit", async e => {
   e.preventDefault();
@@ -70,6 +96,6 @@ document.getElementById("photo-form").addEventListener("submit", async e => {
 });
 
 // ---------------------------
-// Initialisation
+// Init
 // ---------------------------
 loadImages();
