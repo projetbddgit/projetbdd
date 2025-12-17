@@ -1,5 +1,5 @@
 // ---------------------------
-// Convertit lien Google Drive en lien direct (CONSERVÉ)
+// Convertit lien Google Drive en lien direct
 // ---------------------------
 function toDirectDriveUrl(url) {
   const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
@@ -44,7 +44,7 @@ document.getElementById("client-form").addEventListener("submit", async e => {
   });
 
   const data = await res.json();
-  if (!res.ok) return alert("❌ " + data.error);
+  if (!res.ok) return alert(data.error);
 
   alert("✅ Client ajouté");
   e.target.reset();
@@ -58,36 +58,27 @@ document.getElementById("search-btn").addEventListener("click", async () => {
   const res = await fetch(`/api/clients?nom=${encodeURIComponent(nom)}`);
   const data = await res.json();
 
-  if (!res.ok) return alert("❌ " + data.error);
-
   document.getElementById("client-result").textContent =
     JSON.stringify(data, null, 2);
 });
 
 // ---------------------------
-// Ajouter photo (UPLOAD)
+// Ajouter photo URL
 // ---------------------------
 document.getElementById("photo-form").addEventListener("submit", async e => {
   e.preventDefault();
 
-  const fileInput = document.getElementById("photo-file");
+  const url = toDirectDriveUrl(document.getElementById("photo-url").value);
   const flash = document.getElementById("photo-flash").checked;
-
-  if (!fileInput.files.length) {
-    return alert("❌ Sélectionne une image");
-  }
-
-  const formData = new FormData();
-  formData.append("image", fileInput.files[0]);
-  formData.append("flash", flash);
 
   const res = await fetch("/api/photo", {
     method: "POST",
-    body: formData
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ url, flash })
   });
 
   const data = await res.json();
-  if (!res.ok) return alert("❌ " + data.error);
+  if (!res.ok) return alert(data.error);
 
   alert("✅ Photo ajoutée");
   e.target.reset();
@@ -95,31 +86,27 @@ document.getElementById("photo-form").addEventListener("submit", async e => {
 });
 
 // ---------------------------
-// Recherche commande par ID
+// Upload image (bucket)
 // ---------------------------
-document.getElementById("search-cmd-id").addEventListener("click", async () => {
-  const id = document.getElementById("cmd-id").value;
-  const res = await fetch(`/api/commande/${id}`);
+document.getElementById("upload-form").addEventListener("submit", async e => {
+  e.preventDefault();
+
+  const formData = new FormData(e.target);
+
+  const res = await fetch("/api/upload-photo", {
+    method: "POST",
+    body: formData
+  });
+
   const data = await res.json();
 
-  if (!res.ok) return alert("❌ " + data.error);
+  if (!res.ok) {
+    alert(`Erreur (${data.step}) : ${data.error}`);
+    return;
+  }
 
-  document.getElementById("commande-result").textContent =
-    JSON.stringify(data, null, 2);
-});
-
-// ---------------------------
-// Commandes par client
-// ---------------------------
-document.getElementById("search-cmd-client").addEventListener("click", async () => {
-  const id = document.getElementById("cmd-client-id").value;
-  const res = await fetch(`/api/commandes?id_client=${id}`);
-  const data = await res.json();
-
-  if (!res.ok) return alert("❌ " + data.error);
-
-  document.getElementById("commande-result").textContent =
-    JSON.stringify(data, null, 2);
+  alert("✅ Image uploadée");
+  loadImages();
 });
 
 // ---------------------------
