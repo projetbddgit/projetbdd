@@ -36,9 +36,9 @@
 
 <hr>
 
-<h2>Recherche photo par URL</h2>
+<h2>Recherche d’une photo par URL</h2>
 <form id="search-url-form">
-  <input id="search-url" size="80" required>
+  <input id="search-url" placeholder="URL de l’image" size="80" required>
   <button>Rechercher</button>
 </form>
 
@@ -51,81 +51,31 @@
 
 <hr>
 
-<button id="toggle-photos">📂 Afficher / masquer la liste des photos</button>
+<button id="toggle-photos">📂 Afficher / masquer la liste détaillée</button>
 
 <section id="photo-section" hidden>
+  <h2>Liste des photos</h2>
+
   <label>Date min <input type="date" id="date-min"></label>
   <label>Date max <input type="date" id="date-max"></label>
 
-  <select id="order">
-    <option value="desc">Date décroissante</option>
-    <option value="asc">Date croissante</option>
-  </select>
+  <label>
+    Ordre :
+    <select id="order">
+      <option value="desc">Date décroissante</option>
+      <option value="asc">Date croissante</option>
+    </select>
+  </label>
 
   <button onclick="loadPhotoList()">Appliquer</button>
 
   <p id="pagination-info"></p>
+
   <button id="prev">⬅️</button>
   <button id="next">➡️</button>
 
   <div id="photo-list"></div>
 </section>
-
-<hr>
-
-<button id="toggle-materiel">🛠️ Afficher / masquer le matériel</button>
-
-<section id="materiel-section" hidden>
-  <select id="materiel-order">
-    <option value="desc">Date décroissante</option>
-    <option value="asc">Date croissante</option>
-  </select>
-
-  <p id="materiel-info"></p>
-  <button id="mat-prev">⬅️</button>
-  <button id="mat-next">➡️</button>
-
-  <div id="materiel-list"></div>
-</section>
-
-<hr>
-
-<h2>Détails matériel</h2>
-<form id="materiel-search-form">
-  <input id="modele_mat" placeholder="Modèle" required>
-  <input id="num_mat" placeholder="Numéro" required>
-  <button>Rechercher</button>
-</form>
-
-<div id="materiel-detail"></div>
-
-<hr>
-
-<button id="toggle-commandes">📄 Afficher / masquer les commandes</button>
-
-<section id="commande-section" hidden>
-  <select id="commande-order">
-    <option value="desc">Date décroissante</option>
-    <option value="asc">Date croissante</option>
-  </select>
-
-  <p id="commande-info"></p>
-  <button id="cmd-prev">⬅️</button>
-  <button id="cmd-next">➡️</button>
-
-  <div id="commande-list"></div>
-</section>
-
-<hr>
-
-<h2>Détails commande</h2>
-<form id="commande-search-form">
-  <input id="num_cmd" placeholder="Numéro de commande" required>
-  <button>Rechercher</button>
-</form>
-
-<div id="commande-detail"></div>
-
 
 <script src="app.js"></script>
 </body>
