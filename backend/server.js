@@ -247,6 +247,84 @@ app.use(express.static(frontendPath));
 app.get("*", (req, res) =>
   res.sendFile(path.join(frontendPath, "index.html"))
 );
+// ---------------------------
+// COMMANDE — Gestion des images
+// ---------------------------
+
+// 🆕 Ajouter une image à une commande
+app.post("/api/commande-photo", async (req, res) => {
+  const { url, num_cmd, status = "" } = req.body;
+
+  if (!url || !num_cmd) {
+    return res.status(400).json({ error: "url et num_cmd requis" });
+  }
+
+  const { error } = await supabase
+    .from("dossier")
+    .insert([{ url, num_cmd, status }]);
+
+  if (error) return res.status(500).json({ error: error.message });
+
+  res.status(201).json({ success: true });
+});
+
+// 🔄 Changer le statut d'une image dans une commande
+app.patch("/api/commande-photo", async (req, res) => {
+  const { url, num_cmd, status } = req.body;
+
+  if (!url || !num_cmd || status === undefined) {
+    return res.status(400).json({ error: "url, num_cmd et status requis" });
+  }
+
+  const { error } = await supabase
+    .from("dossier")
+    .update({ status })
+    .eq("url", url)
+    .eq("num_cmd", num_cmd);
+
+  if (error) return res.status(500).json({ error: error.message });
+
+  res.json({ success: true });
+});
+
+// ❌ Supprimer une image d'une commande
+app.delete("/api/commande-photo", async (req, res) => {
+  const { url, num_cmd } = req.body;
+
+  if (!url || !num_cmd) {
+    return res.status(400).json({ error: "url et num_cmd requis" });
+  }
+
+  const { error } = await supabase
+    .from("dossier")
+    .delete()
+    .eq("url", url)
+    .eq("num_cmd", num_cmd);
+
+  if (error) return res.status(500).json({ error: error.message });
+
+  res.json({ success: true });
+});
+
+// 🔍 Obtenir toutes les images d'une commande avec status et infos commande
+app.get("/api/commande-photos", async (req, res) => {
+  const { num_cmd } = req.query;
+
+  if (!num_cmd) return res.status(400).json({ error: "num_cmd requis" });
+
+  const { data, error } = await supabase
+    .from("dossier")
+    .select(`
+      status,
+      photo:photo(url, time_photo, focale, obturation, flash, tag, type),
+      commande:commande(num_cmd, id_client, date_cmd)
+    `)
+    .eq("num_cmd", num_cmd);
+
+  if (error) return res.status(500).json({ error: error.message });
+
+  res.json(data);
+});
 
 // ---------------------------
 app.listen(PORT, () =>

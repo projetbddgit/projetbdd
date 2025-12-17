@@ -269,6 +269,69 @@ document.getElementById("toggle-commandes").onclick = () => {
   s.hidden = !s.hidden;
   if (!s.hidden) { commandePage = 1; loadCommandeList(); }
 };
+// ---------------------------
+// Commande — Ajouter/Changer/Supprimer image
+// ---------------------------
+async function addPhotoToCommande(url, num_cmd, status = "") {
+  await fetch("/api/commande-photo", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ url, num_cmd, status })
+  });
+}
+
+async function updatePhotoStatus(url, num_cmd, status) {
+  await fetch("/api/commande-photo", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ url, num_cmd, status })
+  });
+}
+
+async function removePhotoFromCommande(url, num_cmd) {
+  await fetch("/api/commande-photo", {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ url, num_cmd })
+  });
+}
+
+// 🔍 Charger toutes les images d'une commande
+async function loadCommandePhotos(num_cmd) {
+  const res = await fetch(`/api/commande-photos?num_cmd=${num_cmd}`);
+  const photos = await res.json();
+
+  const container = document.getElementById("commande-detail");
+  container.innerHTML = "";
+
+  photos.forEach(p => {
+    const div = document.createElement("div");
+
+    const img = document.createElement("img");
+    img.src = p.photo.url;
+    img.width = 200;
+
+    const info = document.createElement("p");
+    info.innerHTML = `
+      <strong>URL :</strong> ${p.photo.url}<br>
+      <strong>Date :</strong> ${new Date(p.photo.time_photo).toLocaleString()}<br>
+      <strong>Status :</strong> ${p.status}<br>
+      <strong>Commande :</strong> #${p.commande.num_cmd} (Client ${p.commande.id_client})<br>
+      <strong>Date commande :</strong> ${new Date(p.commande.date_cmd).toLocaleDateString()}
+    `;
+
+    div.appendChild(img);
+    div.appendChild(info);
+    container.appendChild(div);
+  });
+}
+
+// 🔎 Formulaire recherche commande
+document.getElementById("commande-search-form").addEventListener("submit", async e => {
+  e.preventDefault();
+  const num_cmd = document.getElementById("num_cmd").value;
+  loadCommandePhotos(num_cmd);
+});
 
 // ---------------------------
 loadImages();
