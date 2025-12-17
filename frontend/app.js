@@ -1,13 +1,4 @@
 // ---------------------------
-// Convertit lien Google Drive en lien direct
-// ---------------------------
-function toDirectDriveUrl(url) {
-  const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
-  if (match && match[1]) return `https://drive.google.com/uc?export=view&id=${match[1]}`;
-  return url;
-}
-
-// ---------------------------
 // Photo aléatoire
 // ---------------------------
 async function loadImages() {
@@ -61,33 +52,11 @@ document.getElementById("search-btn").addEventListener("click", async () => {
 });
 
 // ---------------------------
-// Ajouter photo URL
-// ---------------------------
-document.getElementById("photo-form").addEventListener("submit", async e => {
-  e.preventDefault();
-  const url = toDirectDriveUrl(document.getElementById("photo-url").value);
-  const flash = document.getElementById("photo-flash").checked;
-
-  const res = await fetch("/api/photo", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ url, flash })
-  });
-
-  const data = await res.json();
-  if (!res.ok) return alert(data.error);
-  alert("✅ Photo ajoutée");
-  e.target.reset();
-  loadImages();
-});
-
-// ---------------------------
 // Upload photo bucket avec flash
 // ---------------------------
 document.getElementById("upload-form").addEventListener("submit", async e => {
   e.preventDefault();
   const formData = new FormData(e.target);
-  // ajoute flash
   const flash = document.createElement("input");
   flash.type = "hidden";
   flash.name = "flash";

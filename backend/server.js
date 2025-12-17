@@ -21,7 +21,7 @@ const upload = multer({
 // ---------------------------
 const supabase = createClient(
   process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY // IMPORTANT pour RLS et Storage
+  process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
 // ---------------------------
@@ -99,26 +99,10 @@ app.get("/api/clients", async (req, res) => {
   res.json(data);
 });
 
-// 🖼 Ajouter une photo par URL
-app.post("/api/photo", async (req, res) => {
-  const { url, flash } = req.body;
-  if (!url) return res.status(400).json({ error: "URL obligatoire" });
-
-  const { data, error } = await supabase
-    .from("photo")
-    .insert([{ url, time_photo: new Date().toISOString(), flash: flash ?? false }])
-    .select();
-
-  if (error) return res.status(500).json({ error: error.message });
-  res.status(201).json(data);
-});
-
 // 🆕 Upload photo dans bucket + insertion DB
 app.post("/api/upload-photo", upload.single("image"), async (req, res) => {
   try {
-    if (!req.file) {
-      return res.status(400).json({ step: "multer", error: "Aucun fichier reçu" });
-    }
+    if (!req.file) return res.status(400).json({ step: "multer", error: "Aucun fichier reçu" });
 
     const ext = req.file.originalname.split(".").pop();
     const fileName = `${Date.now()}.${ext}`;
@@ -128,26 +112,20 @@ app.post("/api/upload-photo", upload.single("image"), async (req, res) => {
       .from("photos_bucket")
       .upload(fileName, req.file.buffer, { contentType: req.file.mimetype });
 
-    if (storageError) {
-      return res.status(500).json({ step: "storage", error: storageError.message });
-    }
+    if (storageError) return res.status(500).json({ step: "storage", error: storageError.message });
 
     const { data: urlData } = supabase.storage
       .from("photos_bucket")
       .getPublicUrl(fileName);
 
-    if (!urlData?.publicUrl) {
-      return res.status(500).json({ step: "public_url", error: "Impossible de récupérer l’URL publique" });
-    }
+    if (!urlData?.publicUrl) return res.status(500).json({ step: "public_url", error: "Impossible de récupérer l’URL publique" });
 
     const { data, error: dbError } = await supabase
       .from("photo")
       .insert([{ url: urlData.publicUrl, time_photo: new Date().toISOString(), flash }])
       .select();
 
-    if (dbError) {
-      return res.status(500).json({ step: "database", error: dbError.message });
-    }
+    if (dbError) return res.status(500).json({ step: "database", error: dbError.message });
 
     res.status(201).json({ success: true, url: urlData.publicUrl, data });
 
