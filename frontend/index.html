@@ -99,6 +99,34 @@
 
 <div id="materiel-detail"></div>
 
+<hr>
+
+<button id="toggle-commandes">📄 Afficher / masquer les commandes</button>
+
+<section id="commande-section" hidden>
+  <select id="commande-order">
+    <option value="desc">Date décroissante</option>
+    <option value="asc">Date croissante</option>
+  </select>
+
+  <p id="commande-info"></p>
+  <button id="cmd-prev">⬅️</button>
+  <button id="cmd-next">➡️</button>
+
+  <div id="commande-list"></div>
+</section>
+
+<hr>
+
+<h2>Détails commande</h2>
+<form id="commande-search-form">
+  <input id="num_cmd" placeholder="Numéro de commande" required>
+  <button>Rechercher</button>
+</form>
+
+<div id="commande-detail"></div>
+
+
 <script src="app.js"></script>
 </body>
 </html>
