@@ -28,6 +28,17 @@ const supabase = createClient(
 // API
 // ---------------------------
 
+// 🧪 Test Supabase
+app.get("/api/test-supabase", async (req, res) => {
+  const { data, error } = await supabase
+    .from("materiel")
+    .select("modele_mat")
+    .limit(1);
+
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
 // 🎲 Photos aléatoires
 app.get("/api/random-photos", async (req, res) => {
   const { count } = await supabase
@@ -45,25 +56,59 @@ app.get("/api/random-photos", async (req, res) => {
 
   const results = [];
   for (let offset of offsets) {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("photo")
       .select("url")
       .range(offset, offset);
 
-    if (data?.length) results.push(data[0]);
+    if (error) return res.status(500).json({ error: error.message });
+    if (data?.length > 0) results.push(data[0]);
   }
 
   res.json(results);
 });
 
-// 🆕 Upload image
+// ➕ Ajouter un client
+app.post("/api/client", async (req, res) => {
+  const { nom, mail, poste } = req.body;
+  if (!nom) return res.status(400).json({ error: "Nom obligatoire" });
+
+  const { data, error } = await supabase
+    .from("client")
+    .insert([{ nom, mail, poste }])
+    .select();
+
+  if (error) return res.status(500).json({ error: error.message });
+  res.status(201).json(data);
+});
+
+// 🔍 Recherche clients
+app.get("/api/clients", async (req, res) => {
+  const { nom } = req.query;
+
+  const { data, error } = await supabase
+    .from("client")
+    .select("*")
+    .ilike("nom", `%${nom}%`);
+
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
+// 🆕 Upload image + métadonnées
 app.post("/api/upload-photo", upload.single("image"), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ step: "multer", error: "Aucun fichier" });
     }
 
-    const { focale, obturation, flash, tag, type } = req.body;
+    const {
+      focale,
+      obturation,
+      flash,
+      tag,
+      type
+    } = req.body;
 
     const ext = req.file.originalname.split(".").pop();
     const fileName = `${Date.now()}.${ext}`;
@@ -82,7 +127,7 @@ app.post("/api/upload-photo", upload.single("image"), async (req, res) => {
       .from("photos_bucket")
       .getPublicUrl(fileName);
 
-    const { error: dbError } = await supabase
+    const { data, error: dbError } = await supabase
       .from("photo")
       .insert([{
         url: urlData.publicUrl,
@@ -92,53 +137,43 @@ app.post("/api/upload-photo", upload.single("image"), async (req, res) => {
         flash: flash === "true",
         tag: tag || null,
         type: type || null
-      }]);
+      }])
+      .select();
 
     if (dbError) {
       return res.status(500).json({ step: "database", error: dbError.message });
     }
 
-    res.status(201).json({ success: true });
+    res.status(201).json(data);
 
   } catch (err) {
     res.status(500).json({ step: "unknown", error: err.message });
   }
 });
 
-// 📸 Liste photos PAGINÉE
+// 📸 Liste photos (filtres + tri)
 app.get("/api/photos", async (req, res) => {
   const {
     date_min,
     date_max,
-    order = "desc",
-    page = 1,
-    limit = 10
+    order = "desc"
   } = req.query;
-
-  const from = (page - 1) * limit;
-  const to = from + Number(limit) - 1;
 
   let query = supabase
     .from("photo")
-    .select("url, time_photo", { count: "exact" });
+    .select("url, time_photo");
 
   if (date_min) query = query.gte("time_photo", date_min);
   if (date_max) query = query.lte("time_photo", date_max);
 
-  query = query
-    .order("time_photo", { ascending: order === "asc" })
-    .range(from, to);
+  query = query.order("time_photo", {
+    ascending: order === "asc"
+  });
 
-  const { data, count, error } = await query;
+  const { data, error } = await query;
 
   if (error) return res.status(500).json({ error: error.message });
-
-  res.json({
-    photos: data,
-    total: count,
-    page: Number(page),
-    limit: Number(limit)
-  });
+  res.json(data);
 });
 
 // ---------------------------
