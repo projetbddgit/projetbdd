@@ -1,5 +1,5 @@
 // ---------------------------
-// Convertit lien Google Drive en lien direct (CONSERVÉ, même si plus utilisé)
+// Convertit lien Google Drive en lien direct
 // ---------------------------
 function toDirectDriveUrl(url) {
   const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
@@ -10,7 +10,7 @@ function toDirectDriveUrl(url) {
 }
 
 // ---------------------------
-// Photo aléatoire (Supabase bucket)
+// Photo aléatoire
 // ---------------------------
 async function loadImages() {
   try {
@@ -22,7 +22,7 @@ async function loadImages() {
 
     photos.forEach(photo => {
       const img = document.createElement("img");
-      img.src = photo.url; // lien public Supabase
+      img.src = toDirectDriveUrl(photo.url); // conversion pour Google Drive
       img.width = 300;
       gallery.appendChild(img);
     });
@@ -75,26 +75,18 @@ document.getElementById("search-btn").addEventListener("click", async () => {
 });
 
 // ---------------------------
-// Ajouter photo (UPLOAD FICHIER)
+// Ajouter photo
 // ---------------------------
 document.getElementById("photo-form").addEventListener("submit", async e => {
   e.preventDefault();
 
-  const fileInput = document.getElementById("photo-file");
+  const url = toDirectDriveUrl(document.getElementById("photo-url").value);
   const flash = document.getElementById("photo-flash").checked;
-
-  if (!fileInput.files.length) {
-    alert("❌ Sélectionne une image");
-    return;
-  }
-
-  const formData = new FormData();
-  formData.append("image", fileInput.files[0]);
-  formData.append("flash", flash);
 
   const res = await fetch("/api/photo", {
     method: "POST",
-    body: formData
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ url, flash })
   });
 
   const data = await res.json();
