@@ -73,7 +73,11 @@ document.getElementById("upload-form").addEventListener("submit", async e => {
 
   alert("✅ Image uploadée");
   loadImages();
-  loadPhotoList();
+
+  // Recharge la liste seulement si elle est visible
+  if (!document.getElementById("photo-section").hidden) {
+    loadPhotoList();
+  }
 });
 
 // ---------------------------
@@ -95,6 +99,7 @@ async function loadPhotoList() {
 
   photos.forEach(p => {
     const div = document.createElement("div");
+    div.style.marginBottom = "20px";
 
     const img = document.createElement("img");
     img.src = p.url;
@@ -102,13 +107,26 @@ async function loadPhotoList() {
 
     const info = document.createElement("p");
     info.textContent =
-      `📅 ${new Date(p.time_photo).toLocaleString()} | Flash: ${p.flash}`;
+      `📅 ${new Date(p.time_photo).toLocaleString()} | Flash: ${p.flash} | Type: ${p.type || "-"}`;
 
     div.appendChild(img);
     div.appendChild(info);
     container.appendChild(div);
   });
 }
+
+// ---------------------------
+// Afficher / masquer section liste
+// ---------------------------
+document.getElementById("toggle-photos").addEventListener("click", () => {
+  const section = document.getElementById("photo-section");
+
+  section.hidden = !section.hidden;
+
+  if (!section.hidden) {
+    loadPhotoList();
+  }
+});
 
 document.getElementById("filter-photos")
   .addEventListener("click", loadPhotoList);
@@ -117,4 +135,3 @@ document.getElementById("filter-photos")
 // Init
 // ---------------------------
 loadImages();
-loadPhotoList();

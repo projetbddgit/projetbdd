@@ -24,33 +24,45 @@
 <h2>Uploader une image</h2>
 <form id="upload-form" enctype="multipart/form-data">
   <input type="file" name="image" required><br>
+
   <input name="focale" placeholder="Focale">
   <input name="obturation" placeholder="Obturation">
+
   <label>
     Flash <input type="checkbox" name="flash" value="true">
   </label>
+
   <select name="tag">
     <option value="">Tag</option>
     <option value="ratee">Ratée</option>
   </select>
+
   <select name="type">
     <option value="">Type</option>
     <option value="commande">Commande</option>
     <option value="personnel">Personnel</option>
     <option value="test">Test</option>
   </select>
+
   <button>Uploader</button>
 </form>
 
 <h2>Photos aléatoires</h2>
 <div id="gallery"></div>
 
-<h2>Liste des photos</h2>
-<label>Date min <input type="date" id="date-min"></label>
-<label>Date max <input type="date" id="date-max"></label>
-<button id="filter-photos">Filtrer</button>
+<hr>
 
-<div id="photo-list"></div>
+<button id="toggle-photos">📂 Afficher / masquer la liste détaillée</button>
+
+<section id="photo-section" hidden>
+  <h2>Liste des photos</h2>
+
+  <label>Date min <input type="date" id="date-min"></label>
+  <label>Date max <input type="date" id="date-max"></label>
+  <button id="filter-photos">Filtrer</button>
+
+  <div id="photo-list"></div>
+</section>
 
 <script src="app.js"></script>
 </body>
