@@ -1,4 +1,5 @@
-let currentPage = 1;
+let photoPage = 1;
+let materielPage = 1;
 const limit = 10;
 
 // ---------------------------
@@ -7,148 +8,104 @@ const limit = 10;
 async function loadImages() {
   const res = await fetch("/api/random-photos");
   const photos = await res.json();
-
   const gallery = document.getElementById("gallery");
   gallery.innerHTML = "";
 
-  photos.forEach(photo => {
+  photos.forEach(p => {
     const img = document.createElement("img");
-    img.src = photo.url;
-    img.width = 300;
+    img.src = p.url;
+    img.width = 250;
     gallery.appendChild(img);
   });
 }
 
 // ---------------------------
-// Upload image
-// ---------------------------
-document.getElementById("upload-form").addEventListener("submit", async e => {
-  e.preventDefault();
-
-  const formData = new FormData(e.target);
-  const res = await fetch("/api/upload-photo", {
-    method: "POST",
-    body: formData
-  });
-
-  const data = await res.json();
-  if (!res.ok) {
-    alert(`Erreur (${data.step}) : ${data.error}`);
-    return;
-  }
-
-  alert("✅ Image uploadée");
-  loadImages();
-});
-
-// ---------------------------
-// Liste photos paginée
+// PHOTOS LISTE
 // ---------------------------
 async function loadPhotoList() {
-  const dateMin = document.getElementById("date-min").value;
-  const dateMax = document.getElementById("date-max").value;
-  const order = document.getElementById("order").value;
-
-  const params = new URLSearchParams({
-    page: currentPage,
-    limit,
-    order
-  });
-
-  if (dateMin) params.append("date_min", dateMin);
-  if (dateMax) params.append("date_max", dateMax);
-
-  const res = await fetch(`/api/photos?${params.toString()}`);
+  const order = document.getElementById("photo-order").value;
+  const res = await fetch(`/api/photos?page=${photoPage}&limit=${limit}&order=${order}`);
   const { photos, total } = await res.json();
 
   const container = document.getElementById("photo-list");
   container.innerHTML = "";
 
   photos.forEach(p => {
-    const div = document.createElement("div");
-
-    const img = document.createElement("img");
-    img.src = p.url;
-    img.width = 200;
-
-    const info = document.createElement("p");
-    info.innerHTML = `
-      <strong>URL :</strong> ${p.url}<br>
-      <strong>Date :</strong> ${new Date(p.time_photo).toLocaleString()}
+    container.innerHTML += `
+      <p>
+        <strong>URL :</strong> ${p.url}<br>
+        <strong>Date :</strong> ${new Date(p.time_photo).toLocaleString()}
+      </p>
     `;
-
-    div.appendChild(img);
-    div.appendChild(info);
-    container.appendChild(div);
   });
 
-  const start = (currentPage - 1) * limit + 1;
-  const end = Math.min(currentPage * limit, total);
-
-  document.getElementById("pagination-info").textContent =
-    `${start} à ${end} sur ${total} photos`;
-
-  document.getElementById("prev").disabled = currentPage === 1;
-  document.getElementById("next").disabled = end >= total;
+  document.getElementById("photo-info").textContent =
+    `${(photoPage - 1) * limit + 1} à ${Math.min(photoPage * limit, total)} sur ${total}`;
 }
 
 // ---------------------------
-// Pagination
+// MATÉRIEL LISTE
 // ---------------------------
-document.getElementById("prev").addEventListener("click", () => {
-  currentPage--;
-  loadPhotoList();
-});
+async function loadMaterielList() {
+  const order = document.getElementById("materiel-order").value;
+  const res = await fetch(`/api/materiels?page=${materielPage}&limit=${limit}&order=${order}`);
+  const { materiels, total } = await res.json();
 
-document.getElementById("next").addEventListener("click", () => {
-  currentPage++;
-  loadPhotoList();
-});
-
-// ---------------------------
-// Recherche par URL
-// ---------------------------
-document.getElementById("search-url-form").addEventListener("submit", async e => {
-  e.preventDefault();
-
-  const url = document.getElementById("search-url").value;
-  const res = await fetch(`/api/photo-by-url?url=${encodeURIComponent(url)}`);
-  const data = await res.json();
-
-  const container = document.getElementById("photo-details");
+  const container = document.getElementById("materiel-list");
   container.innerHTML = "";
 
+  materiels.forEach(m => {
+    container.innerHTML += `
+      <p>
+        <strong>Modèle :</strong> ${m.modele_mat}<br>
+        <strong>Numéro :</strong> ${m.num_mat}<br>
+        <strong>Date acquisition :</strong> ${new Date(m.date_acq).toLocaleDateString()}
+      </p>
+    `;
+  });
+
+  document.getElementById("materiel-info").textContent =
+    `${(materielPage - 1) * limit + 1} à ${Math.min(materielPage * limit, total)} sur ${total}`;
+}
+
+// ---------------------------
+// MATÉRIEL DÉTAIL
+// ---------------------------
+document.getElementById("materiel-search-form").addEventListener("submit", async e => {
+  e.preventDefault();
+
+  const modele = document.getElementById("modele_mat").value;
+  const num = document.getElementById("num_mat").value;
+
+  const res = await fetch(
+    `/api/materiel-detail?modele_mat=${encodeURIComponent(modele)}&num_mat=${encodeURIComponent(num)}`
+  );
+
+  const data = await res.json();
+  const box = document.getElementById("materiel-detail");
+
   if (!res.ok) {
-    container.textContent = "❌ Photo introuvable";
+    box.textContent = "❌ Matériel introuvable";
     return;
   }
 
-  container.innerHTML = `
-    <img src="${data.url}" width="300"><br>
-    <strong>URL :</strong> ${data.url}<br>
-    <strong>Date :</strong> ${new Date(data.time_photo).toLocaleString()}<br>
-    <strong>Focale :</strong> ${data.focale ?? "—"}<br>
-    <strong>Obturation :</strong> ${data.obturation ?? "—"}<br>
-    <strong>Flash :</strong> ${data.flash}<br>
-    <strong>Tag :</strong> ${data.tag ?? "—"}<br>
-    <strong>Type :</strong> ${data.type ?? "—"}
-  `;
+  box.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
 });
 
 // ---------------------------
-// Toggle liste
+// TOGGLES
 // ---------------------------
-document.getElementById("toggle-photos").addEventListener("click", () => {
-  const section = document.getElementById("photo-section");
-  section.hidden = !section.hidden;
+document.getElementById("toggle-photos").onclick = () => {
+  const s = document.getElementById("photo-section");
+  s.hidden = !s.hidden;
+  if (!s.hidden) loadPhotoList();
+};
 
-  if (!section.hidden) {
-    currentPage = 1;
-    loadPhotoList();
-  }
-});
+document.getElementById("toggle-materiel").onclick = () => {
+  const s = document.getElementById("materiel-section");
+  s.hidden = !s.hidden;
+  if (!s.hidden) loadMaterielList();
+};
 
-// ---------------------------
-// Init
 // ---------------------------
 loadImages();

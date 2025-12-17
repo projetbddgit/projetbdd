@@ -2,80 +2,55 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Application Photo</title>
+  <title>Photos & Matériel</title>
 </head>
 <body>
 
 <h1>Application Photo</h1>
-
-<h2>Uploader une image</h2>
-<form id="upload-form" enctype="multipart/form-data">
-  <input type="file" name="image" required><br>
-
-  <input name="focale" placeholder="Focale">
-  <input name="obturation" placeholder="Obturation">
-
-  <label>
-    Flash <input type="checkbox" name="flash" value="true">
-  </label>
-
-  <select name="tag">
-    <option value="">Tag</option>
-    <option value="ratee">Ratée</option>
-  </select>
-
-  <select name="type">
-    <option value="">Type</option>
-    <option value="commande">Commande</option>
-    <option value="personnel">Personnel</option>
-    <option value="test">Test</option>
-  </select>
-
-  <button>Uploader</button>
-</form>
-
-<hr>
-
-<h2>Recherche d’une photo par URL</h2>
-<form id="search-url-form">
-  <input id="search-url" placeholder="URL de l’image" size="80" required>
-  <button>Rechercher</button>
-</form>
-
-<div id="photo-details"></div>
-
-<hr>
 
 <h2>Photos aléatoires</h2>
 <div id="gallery"></div>
 
 <hr>
 
-<button id="toggle-photos">📂 Afficher / masquer la liste détaillée</button>
+<button id="toggle-photos">📷 Afficher / masquer les photos</button>
 
 <section id="photo-section" hidden>
-  <h2>Liste des photos</h2>
+  <select id="photo-order">
+    <option value="desc">Date décroissante</option>
+    <option value="asc">Date croissante</option>
+  </select>
+  <button onclick="loadPhotoList()">Actualiser</button>
 
-  <label>Date min <input type="date" id="date-min"></label>
-  <label>Date max <input type="date" id="date-max"></label>
-
-  <label>
-    Ordre :
-    <select id="order">
-      <option value="desc">Date décroissante</option>
-      <option value="asc">Date croissante</option>
-    </select>
-  </label>
-
-  <button onclick="loadPhotoList()">Appliquer</button>
-
-  <p id="pagination-info"></p>
-
-  <button id="prev">⬅️</button>
-  <button id="next">➡️</button>
-
+  <p id="photo-info"></p>
   <div id="photo-list"></div>
 </section>
+
+<hr>
+
+<button id="toggle-materiel">🛠️ Afficher / masquer le matériel</button>
+
+<section id="materiel-section" hidden>
+  <select id="materiel-order">
+    <option value="desc">Date décroissante</option>
+    <option value="asc">Date croissante</option>
+  </select>
+  <button onclick="loadMaterielList()">Actualiser</button>
+
+  <p id="materiel-info"></p>
+  <div id="materiel-list"></div>
+</section>
+
+<hr>
+
+<h2>Détails d’un matériel</h2>
+<form id="materiel-search-form">
+  <input id="modele_mat" placeholder="Modèle" required>
+  <input id="num_mat" placeholder="Numéro" required>
+  <button>Rechercher</button>
+</form>
+
+<div id="materiel-detail"></div>
 
 <script src="app.js"></script>
 </body>
