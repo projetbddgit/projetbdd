@@ -1,3 +1,6 @@
+let currentPage = 1;
+const limit = 10;
+
 // ---------------------------
 // Photos aléatoires
 // ---------------------------
@@ -23,14 +26,12 @@ document.getElementById("upload-form").addEventListener("submit", async e => {
   e.preventDefault();
 
   const formData = new FormData(e.target);
-
   const res = await fetch("/api/upload-photo", {
     method: "POST",
     body: formData
   });
 
   const data = await res.json();
-
   if (!res.ok) {
     alert(`Erreur (${data.step}) : ${data.error}`);
     return;
@@ -40,32 +41,36 @@ document.getElementById("upload-form").addEventListener("submit", async e => {
   loadImages();
 
   if (!document.getElementById("photo-section").hidden) {
+    currentPage = 1;
     loadPhotoList();
   }
 });
 
 // ---------------------------
-// Liste photos + tri
+// Liste photos paginée
 // ---------------------------
 async function loadPhotoList() {
   const dateMin = document.getElementById("date-min").value;
   const dateMax = document.getElementById("date-max").value;
   const order = document.getElementById("order").value;
 
-  const params = new URLSearchParams();
+  const params = new URLSearchParams({
+    page: currentPage,
+    limit,
+    order
+  });
+
   if (dateMin) params.append("date_min", dateMin);
   if (dateMax) params.append("date_max", dateMax);
-  params.append("order", order);
 
   const res = await fetch(`/api/photos?${params.toString()}`);
-  const photos = await res.json();
+  const { photos, total } = await res.json();
 
   const container = document.getElementById("photo-list");
   container.innerHTML = "";
 
   photos.forEach(p => {
     const div = document.createElement("div");
-    div.style.marginBottom = "20px";
 
     const img = document.createElement("img");
     img.src = p.url;
@@ -81,7 +86,29 @@ async function loadPhotoList() {
     div.appendChild(info);
     container.appendChild(div);
   });
+
+  const start = (currentPage - 1) * limit + 1;
+  const end = Math.min(currentPage * limit, total);
+
+  document.getElementById("pagination-info").textContent =
+    `${start} à ${end} sur ${total} photos`;
+
+  document.getElementById("prev").disabled = currentPage === 1;
+  document.getElementById("next").disabled = end >= total;
 }
+
+// ---------------------------
+// Pagination controls
+// ---------------------------
+document.getElementById("prev").addEventListener("click", () => {
+  currentPage--;
+  loadPhotoList();
+});
+
+document.getElementById("next").addEventListener("click", () => {
+  currentPage++;
+  loadPhotoList();
+});
 
 // ---------------------------
 // Toggle affichage
@@ -90,11 +117,17 @@ document.getElementById("toggle-photos").addEventListener("click", () => {
   const section = document.getElementById("photo-section");
   section.hidden = !section.hidden;
 
-  if (!section.hidden) loadPhotoList();
+  if (!section.hidden) {
+    currentPage = 1;
+    loadPhotoList();
+  }
 });
 
 document.getElementById("filter-photos")
-  .addEventListener("click", loadPhotoList);
+  .addEventListener("click", () => {
+    currentPage = 1;
+    loadPhotoList();
+  });
 
 // ---------------------------
 // Init
