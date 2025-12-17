@@ -24,7 +24,7 @@ const supabase = createClient(
   process.env.SUPABASE_KEY,
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
-
+//test bizarre
 // ---------------------------
 // API — PHOTOS (INCHANGÉ)
 // ---------------------------
