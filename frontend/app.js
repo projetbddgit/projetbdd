@@ -5,7 +5,6 @@ const limit = 10;
 
 // ---------------------------
 // Photos aléatoires
-// ---------------------------
 async function loadImages() {
   const res = await fetch("/api/random-photos");
   const photos = await res.json();
@@ -23,7 +22,6 @@ async function loadImages() {
 
 // ---------------------------
 // Upload image
-// ---------------------------
 document.getElementById("upload-form").addEventListener("submit", async e => {
   e.preventDefault();
 
@@ -45,7 +43,6 @@ document.getElementById("upload-form").addEventListener("submit", async e => {
 
 // ---------------------------
 // Liste photos paginée
-// ---------------------------
 async function loadPhotoList() {
   const dateMin = document.getElementById("date-min").value;
   const dateMax = document.getElementById("date-max").value;
@@ -106,7 +103,6 @@ document.getElementById("next").addEventListener("click", () => {
 
 // ---------------------------
 // Recherche photo par URL
-// ---------------------------
 document.getElementById("search-url-form").addEventListener("submit", async e => {
   e.preventDefault();
 
@@ -130,7 +126,6 @@ document.getElementById("search-url-form").addEventListener("submit", async e =>
 
 // ---------------------------
 // MATÉRIEL — LISTE
-// ---------------------------
 async function loadMaterielList() {
   const order = document.getElementById("materiel-order").value;
 
@@ -173,7 +168,6 @@ document.getElementById("mat-next").onclick = () => {
 
 // ---------------------------
 // MATÉRIEL — DÉTAIL
-// ---------------------------
 document.getElementById("materiel-search-form").addEventListener("submit", async e => {
   e.preventDefault();
 
@@ -193,7 +187,6 @@ document.getElementById("materiel-search-form").addEventListener("submit", async
     return;
   }
 
-  // --- SEULE MODIFICATION : affichage formaté selon ta demande ---
   container.innerHTML = `
     <strong>Modèle :</strong> ${data.modele_mat}<br>
     <strong>Numéro de série :</strong> ${data.num_mat}<br>
@@ -206,24 +199,75 @@ document.getElementById("materiel-search-form").addEventListener("submit", async
 });
 
 // ---------------------------
-// Toggles
+// COMMANDES — LISTE
+async function loadCommandeList() {
+  const order = document.getElementById("commande-order").value;
+  const res = await fetch(`/api/commandes?page=${commandePage}&limit=${limit}&order=${order}`);
+  const { commandes, total } = await res.json();
+  const container = document.getElementById("commande-list");
+  container.innerHTML = "";
+
+  commandes.forEach(c => {
+    container.innerHTML += `<p>
+      <strong>Numéro :</strong> ${c.num_cmd}<br>
+      <strong>ID client :</strong> ${c.id_client}<br>
+      <strong>Date :</strong> ${new Date(c.date_cmd).toLocaleDateString()}
+    </p>`;
+  });
+
+  const start = (commandePage - 1) * limit + 1;
+  const end = Math.min(commandePage * limit, total);
+  document.getElementById("commande-info").textContent = `${start} à ${end} sur ${total} commandes`;
+
+  document.getElementById("cmd-prev").disabled = commandePage === 1;
+  document.getElementById("cmd-next").disabled = end >= total;
+}
+
+document.getElementById("cmd-prev").onclick = () => { commandePage--; loadCommandeList(); };
+document.getElementById("cmd-next").onclick = () => { commandePage++; loadCommandeList(); };
+
 // ---------------------------
+// COMMANDES — DÉTAIL
+document.getElementById("commande-search-form").addEventListener("submit", async e => {
+  e.preventDefault();
+  const num_cmd = document.getElementById("num_cmd").value;
+  const res = await fetch(`/api/commande-detail?num_cmd=${encodeURIComponent(num_cmd)}`);
+  const data = await res.json();
+  const container = document.getElementById("commande-detail");
+  container.innerHTML = "";
+
+  if (!res.ok) {
+    container.textContent = "❌ Commande introuvable";
+    return;
+  }
+
+  let photosHtml = "";
+  data.photos.forEach(p => { photosHtml += `<li>${p.url} — status: ${p.status}</li>`; });
+
+  container.innerHTML = `
+    <strong>Numéro de commande :</strong> ${data.num_cmd}<br>
+    <strong>Date :</strong> ${new Date(data.date_cmd).toLocaleDateString()}<br>
+    <strong>Client :</strong> ${data.client_nom} (ID: ${data.client_id})<br>
+    <strong>Photos liées :</strong><ul>${photosHtml}</ul>
+  `;
+});
+
+// ---------------------------
+// Toggles
 document.getElementById("toggle-photos").onclick = () => {
   const s = document.getElementById("photo-section");
   s.hidden = !s.hidden;
-  if (!s.hidden) {
-    currentPage = 1;
-    loadPhotoList();
-  }
+  if (!s.hidden) { currentPage = 1; loadPhotoList(); }
 };
-
 document.getElementById("toggle-materiel").onclick = () => {
   const s = document.getElementById("materiel-section");
   s.hidden = !s.hidden;
-  if (!s.hidden) {
-    materielPage = 1;
-    loadMaterielList();
-  }
+  if (!s.hidden) { materielPage = 1; loadMaterielList(); }
+};
+document.getElementById("toggle-commandes").onclick = () => {
+  const s = document.getElementById("commande-section");
+  s.hidden = !s.hidden;
+  if (!s.hidden) { commandePage = 1; loadCommandeList(); }
 };
 
 // ---------------------------

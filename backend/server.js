@@ -146,7 +146,7 @@ app.get("/api/photo-by-url", async (req, res) => {
 });
 
 // ---------------------------
-// API — MATÉRIEL (AJOUT SEULEMENT)
+// API — MATÉRIEL
 // ---------------------------
 
 // 📦 Liste matériel PAGINÉE
@@ -167,7 +167,7 @@ app.get("/api/materiels", async (req, res) => {
   res.json({ materiels: data, total: count });
 });
 
-// 🔍 Détails matériel via (modele_mat, num_mat)
+// 🔍 Détails matériel
 app.get("/api/materiel-detail", async (req, res) => {
   const { modele_mat, num_mat } = req.query;
 
@@ -182,11 +182,61 @@ app.get("/api/materiel-detail", async (req, res) => {
     .eq("num_mat", num_mat)
     .single();
 
-  if (error) {
-    return res.status(404).json({ error: "Matériel introuvable" });
-  }
+  if (error) return res.status(404).json({ error: "Matériel introuvable" });
 
   res.json(data);
+});
+
+// ---------------------------
+// API — COMMANDES
+// ---------------------------
+
+// 📄 Liste commandes PAGINÉE
+app.get("/api/commandes", async (req, res) => {
+  const { order = "desc", page = 1, limit = 10 } = req.query;
+  const from = (page - 1) * limit;
+  const to = from + Number(limit) - 1;
+
+  const { data, count, error } = await supabase
+    .from("commande")
+    .select("num_cmd, id_client, date_cmd", { count: "exact" })
+    .order("date_cmd", { ascending: order === "asc" })
+    .range(from, to);
+
+  if (error) return res.status(500).json({ error: error.message });
+
+  res.json({ commandes: data, total: count });
+});
+
+// 🔍 Détails commande
+app.get("/api/commande-detail", async (req, res) => {
+  const { num_cmd } = req.query;
+  if (!num_cmd) return res.status(400).json({ error: "num_cmd requis" });
+
+  // Récup commande + client
+  const { data: cmdData, error: cmdError } = await supabase
+    .from("commande")
+    .select("*, client:client(id_client, nom)")
+    .eq("num_cmd", num_cmd)
+    .single();
+
+  if (cmdError) return res.status(404).json({ error: "Commande introuvable" });
+
+  // Photos liées via dossier
+  const { data: photosData, error: photosError } = await supabase
+    .from("dossier")
+    .select("url, status")
+    .eq("num_cmd", num_cmd);
+
+  if (photosError) return res.status(500).json({ error: photosError.message });
+
+  res.json({
+    num_cmd: cmdData.num_cmd,
+    date_cmd: cmdData.date_cmd,
+    client_id: cmdData.id_client,
+    client_nom: cmdData.client?.nom ?? "Inconnu",
+    photos: photosData || []
+  });
 });
 
 // ---------------------------
