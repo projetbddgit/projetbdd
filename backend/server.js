@@ -11,6 +11,8 @@ const PORT = process.env.PORT || 3000;
 // MIDDLEWARE
 // ---------------------------
 app.use(express.json());
+
+// Multer (upload en mémoire)
 const upload = multer({ storage: multer.memoryStorage() });
 
 // ---------------------------
@@ -38,10 +40,11 @@ app.get("/api/test-supabase", async (req, res) => {
 
 // 🎲 Photos aléatoires
 app.get("/api/random-photos", async (req, res) => {
-  const { count } = await supabase
+  const { count, error: countError } = await supabase
     .from("photo")
     .select("*", { count: "exact", head: true });
 
+  if (countError) return res.status(500).json({ error: countError.message });
   if (!count) return res.json([]);
 
   const offsets = new Set();
@@ -68,6 +71,7 @@ app.get("/api/random-photos", async (req, res) => {
 // ➕ Ajouter un client
 app.post("/api/client", async (req, res) => {
   const { nom, mail, poste } = req.body;
+
   if (!nom || nom.trim() === "") {
     return res.status(400).json({ error: "Le nom est obligatoire" });
   }
@@ -95,55 +99,49 @@ app.get("/api/clients", async (req, res) => {
   res.json(data);
 });
 
-// 🖼 Ajouter une photo PAR URL (FONCTIONNALITÉ CONSERVÉE)
-app.post("/api/photo", async (req, res) => {
-  const { url, flash } = req.body;
-  if (!url) return res.status(400).json({ error: "URL obligatoire" });
-
-  const { data, error } = await supabase
-    .from("photo")
-    .insert([{ url, time_photo: new Date().toISOString(), flash: flash ?? false }])
-    .select();
-
-  if (error) return res.status(500).json({ error: error.message });
-  res.status(201).json(data);
-});
-
-// 🖼➕ NOUVEAU : upload fichier → bucket → table photo
-app.post("/api/photo-upload", upload.single("file"), async (req, res) => {
+// 🖼 Ajouter une photo (UPLOAD + DB)
+app.post("/api/photo", upload.single("image"), async (req, res) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ error: "Fichier manquant" });
+      return res.status(400).json({ error: "Aucune image envoyée" });
     }
+
+    const flash = req.body.flash === "true";
 
     const fileName = `${Date.now()}_${req.file.originalname}`;
 
+    // Upload dans le bucket
     const { error: uploadError } = await supabase.storage
       .from("photos_bucket")
       .upload(fileName, req.file.buffer, {
-        contentType: req.file.mimetype
+        contentType: req.file.mimetype,
+        upsert: false
       });
 
-    if (uploadError) throw uploadError;
+    if (uploadError) {
+      return res.status(500).json({ error: uploadError.message });
+    }
 
+    // URL publique
     const { data: publicUrlData } = supabase.storage
       .from("photos_bucket")
       .getPublicUrl(fileName);
 
     const imageUrl = publicUrlData.publicUrl;
 
+    // Insertion en base
     const { data, error } = await supabase
       .from("photo")
       .insert([
         {
           url: imageUrl,
           time_photo: new Date().toISOString(),
-          flash: req.body.flash === "true"
+          flash
         }
       ])
       .select();
 
-    if (error) throw error;
+    if (error) return res.status(500).json({ error: error.message });
 
     res.status(201).json(data);
   } catch (err) {
@@ -185,9 +183,13 @@ app.get("/api/commandes", async (req, res) => {
 // ---------------------------
 const frontendPath = path.join(__dirname, "..", "frontend");
 app.use(express.static(frontendPath));
-app.get("*", (req, res) => res.sendFile(path.join(frontendPath, "index.html")));
+app.get("*", (req, res) =>
+  res.sendFile(path.join(frontendPath, "index.html"))
+);
 
 // ---------------------------
 // START SERVER
 // ---------------------------
-app.listen(PORT, () => console.log(`🚀 Backend running on port ${PORT}`));
+app.listen(PORT, () =>
+  console.log(`🚀 Backend running on port ${PORT}`)
+);
