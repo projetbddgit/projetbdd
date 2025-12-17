@@ -25,10 +25,10 @@ const supabase = createClient(
 );
 
 // ---------------------------
-// PHOTOS
+// API — PHOTOS (INCHANGÉ)
 // ---------------------------
 
-// Photos aléatoires
+// 🎲 Photos aléatoires
 app.get("/api/random-photos", async (req, res) => {
   const { count } = await supabase
     .from("photo")
@@ -56,7 +56,7 @@ app.get("/api/random-photos", async (req, res) => {
   res.json(results);
 });
 
-// Upload photo
+// 🆕 Upload image
 app.post("/api/upload-photo", upload.single("image"), async (req, res) => {
   try {
     if (!req.file) {
@@ -64,6 +64,7 @@ app.post("/api/upload-photo", upload.single("image"), async (req, res) => {
     }
 
     const { focale, obturation, flash, tag, type } = req.body;
+
     const ext = req.file.originalname.split(".").pop();
     const fileName = `${Date.now()}.${ext}`;
 
@@ -104,24 +105,32 @@ app.post("/api/upload-photo", upload.single("image"), async (req, res) => {
   }
 });
 
-// Liste photos paginée
+// 📸 Liste photos PAGINÉE
 app.get("/api/photos", async (req, res) => {
-  const { order = "desc", page = 1, limit = 10 } = req.query;
+  const { date_min, date_max, order = "desc", page = 1, limit = 10 } = req.query;
+
   const from = (page - 1) * limit;
   const to = from + Number(limit) - 1;
 
-  const { data, count, error } = await supabase
+  let query = supabase
     .from("photo")
-    .select("url, time_photo", { count: "exact" })
+    .select("url, time_photo", { count: "exact" });
+
+  if (date_min) query = query.gte("time_photo", date_min);
+  if (date_max) query = query.lte("time_photo", date_max);
+
+  query = query
     .order("time_photo", { ascending: order === "asc" })
     .range(from, to);
+
+  const { data, count, error } = await query;
 
   if (error) return res.status(500).json({ error: error.message });
 
   res.json({ photos: data, total: count });
 });
 
-// Détails photo par URL
+// 🔍 Photo par URL
 app.get("/api/photo-by-url", async (req, res) => {
   const { url } = req.query;
   if (!url) return res.status(400).json({ error: "URL manquante" });
@@ -137,12 +146,13 @@ app.get("/api/photo-by-url", async (req, res) => {
 });
 
 // ---------------------------
-// MATÉRIEL (AJOUT)
+// API — MATÉRIEL (AJOUT SEULEMENT)
 // ---------------------------
 
-// Liste matériel paginée
+// 📦 Liste matériel PAGINÉE
 app.get("/api/materiels", async (req, res) => {
   const { order = "desc", page = 1, limit = 10 } = req.query;
+
   const from = (page - 1) * limit;
   const to = from + Number(limit) - 1;
 
@@ -157,7 +167,7 @@ app.get("/api/materiels", async (req, res) => {
   res.json({ materiels: data, total: count });
 });
 
-// Détails matériel par (modele_mat, num_mat)
+// 🔍 Détails matériel via (modele_mat, num_mat)
 app.get("/api/materiel-detail", async (req, res) => {
   const { modele_mat, num_mat } = req.query;
 

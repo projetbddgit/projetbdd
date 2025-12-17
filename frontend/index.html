@@ -2,27 +2,72 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Photos & Matériel</title>
+  <title>Application Photo</title>
 </head>
 <body>
 
 <h1>Application Photo</h1>
+
+<h2>Uploader une image</h2>
+<form id="upload-form" enctype="multipart/form-data">
+  <input type="file" name="image" required><br>
+
+  <input name="focale" placeholder="Focale">
+  <input name="obturation" placeholder="Obturation">
+
+  <label>
+    Flash <input type="checkbox" name="flash" value="true">
+  </label>
+
+  <select name="tag">
+    <option value="">Tag</option>
+    <option value="ratee">Ratée</option>
+  </select>
+
+  <select name="type">
+    <option value="">Type</option>
+    <option value="commande">Commande</option>
+    <option value="personnel">Personnel</option>
+    <option value="test">Test</option>
+  </select>
+
+  <button>Uploader</button>
+</form>
+
+<hr>
+
+<h2>Recherche photo par URL</h2>
+<form id="search-url-form">
+  <input id="search-url" size="80" required>
+  <button>Rechercher</button>
+</form>
+
+<div id="photo-details"></div>
+
+<hr>
 
 <h2>Photos aléatoires</h2>
 <div id="gallery"></div>
 
 <hr>
 
-<button id="toggle-photos">📷 Afficher / masquer les photos</button>
+<button id="toggle-photos">📂 Afficher / masquer la liste des photos</button>
 
 <section id="photo-section" hidden>
-  <select id="photo-order">
+  <label>Date min <input type="date" id="date-min"></label>
+  <label>Date max <input type="date" id="date-max"></label>
+
+  <select id="order">
     <option value="desc">Date décroissante</option>
     <option value="asc">Date croissante</option>
   </select>
-  <button onclick="loadPhotoList()">Actualiser</button>
 
-  <p id="photo-info"></p>
+  <button onclick="loadPhotoList()">Appliquer</button>
+
+  <p id="pagination-info"></p>
+  <button id="prev">⬅️</button>
+  <button id="next">➡️</button>
+
   <div id="photo-list"></div>
 </section>
 
@@ -35,15 +80,17 @@
     <option value="desc">Date décroissante</option>
     <option value="asc">Date croissante</option>
   </select>
-  <button onclick="loadMaterielList()">Actualiser</button>
 
   <p id="materiel-info"></p>
+  <button id="mat-prev">⬅️</button>
+  <button id="mat-next">➡️</button>
+
   <div id="materiel-list"></div>
 </section>
 
 <hr>
 
-<h2>Détails d’un matériel</h2>
+<h2>Détails matériel</h2>
 <form id="materiel-search-form">
   <input id="modele_mat" placeholder="Modèle" required>
   <input id="num_mat" placeholder="Numéro" required>
