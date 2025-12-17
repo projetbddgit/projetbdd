@@ -17,42 +17,7 @@ async function loadImages() {
 }
 
 // ---------------------------
-// Ajouter client
-// ---------------------------
-document.getElementById("client-form").addEventListener("submit", async e => {
-  e.preventDefault();
-
-  const nom = document.getElementById("nom").value;
-  const mail = document.getElementById("mail").value;
-  const poste = document.getElementById("poste").value;
-
-  const res = await fetch("/api/client", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ nom, mail, poste })
-  });
-
-  const data = await res.json();
-  if (!res.ok) return alert(data.error);
-
-  alert("✅ Client ajouté");
-  e.target.reset();
-});
-
-// ---------------------------
-// Recherche client
-// ---------------------------
-document.getElementById("search-btn").addEventListener("click", async () => {
-  const nom = document.getElementById("search-name").value;
-  const res = await fetch(`/api/clients?nom=${encodeURIComponent(nom)}`);
-  const data = await res.json();
-
-  document.getElementById("client-result").textContent =
-    JSON.stringify(data, null, 2);
-});
-
-// ---------------------------
-// Upload image + infos
+// Upload image
 // ---------------------------
 document.getElementById("upload-form").addEventListener("submit", async e => {
   e.preventDefault();
@@ -74,22 +39,23 @@ document.getElementById("upload-form").addEventListener("submit", async e => {
   alert("✅ Image uploadée");
   loadImages();
 
-  // Recharge la liste seulement si elle est visible
   if (!document.getElementById("photo-section").hidden) {
     loadPhotoList();
   }
 });
 
 // ---------------------------
-// Liste photos + filtre date
+// Liste photos + tri
 // ---------------------------
 async function loadPhotoList() {
   const dateMin = document.getElementById("date-min").value;
   const dateMax = document.getElementById("date-max").value;
+  const order = document.getElementById("order").value;
 
   const params = new URLSearchParams();
   if (dateMin) params.append("date_min", dateMin);
   if (dateMax) params.append("date_max", dateMax);
+  params.append("order", order);
 
   const res = await fetch(`/api/photos?${params.toString()}`);
   const photos = await res.json();
@@ -106,8 +72,10 @@ async function loadPhotoList() {
     img.width = 250;
 
     const info = document.createElement("p");
-    info.textContent =
-      `📅 ${new Date(p.time_photo).toLocaleString()} | Flash: ${p.flash} | Type: ${p.type || "-"}`;
+    info.innerHTML = `
+      <strong>URL :</strong> ${p.url}<br>
+      <strong>Date :</strong> ${new Date(p.time_photo).toLocaleString()}
+    `;
 
     div.appendChild(img);
     div.appendChild(info);
@@ -116,16 +84,13 @@ async function loadPhotoList() {
 }
 
 // ---------------------------
-// Afficher / masquer section liste
+// Toggle affichage
 // ---------------------------
 document.getElementById("toggle-photos").addEventListener("click", () => {
   const section = document.getElementById("photo-section");
-
   section.hidden = !section.hidden;
 
-  if (!section.hidden) {
-    loadPhotoList();
-  }
+  if (!section.hidden) loadPhotoList();
 });
 
 document.getElementById("filter-photos")

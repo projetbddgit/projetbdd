@@ -8,19 +8,6 @@
 
 <h1>Application Photo</h1>
 
-<h2>Ajouter un client</h2>
-<form id="client-form">
-  <input id="nom" placeholder="Nom *" required>
-  <input id="mail" placeholder="Email">
-  <input id="poste" placeholder="Code postal">
-  <button>Ajouter</button>
-</form>
-
-<h2>Recherche client</h2>
-<input id="search-name">
-<button id="search-btn">Rechercher</button>
-<pre id="client-result"></pre>
-
 <h2>Uploader une image</h2>
 <form id="upload-form" enctype="multipart/form-data">
   <input type="file" name="image" required><br>
@@ -59,7 +46,16 @@
 
   <label>Date min <input type="date" id="date-min"></label>
   <label>Date max <input type="date" id="date-max"></label>
-  <button id="filter-photos">Filtrer</button>
+
+  <label>
+    Ordre :
+    <select id="order">
+      <option value="desc">Date décroissante</option>
+      <option value="asc">Date croissante</option>
+    </select>
+  </label>
+
+  <button id="filter-photos">Appliquer</button>
 
   <div id="photo-list"></div>
 </section>

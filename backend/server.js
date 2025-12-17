@@ -31,8 +31,8 @@ const supabase = createClient(
 // 🧪 Test Supabase
 app.get("/api/test-supabase", async (req, res) => {
   const { data, error } = await supabase
-    .from("photo")
-    .select("url")
+    .from("materiel")
+    .select("modele_mat")
     .limit(1);
 
   if (error) return res.status(500).json({ error: error.message });
@@ -71,25 +71,20 @@ app.get("/api/random-photos", async (req, res) => {
 // ➕ Ajouter un client
 app.post("/api/client", async (req, res) => {
   const { nom, mail, poste } = req.body;
-
-  if (!nom || nom.trim() === "") {
-    return res.status(400).json({ error: "Le nom est obligatoire" });
-  }
+  if (!nom) return res.status(400).json({ error: "Nom obligatoire" });
 
   const { data, error } = await supabase
     .from("client")
-    .insert([{ nom: nom.trim(), mail: mail || null, poste: poste || null }])
+    .insert([{ nom, mail, poste }])
     .select();
 
   if (error) return res.status(500).json({ error: error.message });
-
   res.status(201).json(data);
 });
 
 // 🔍 Recherche clients
 app.get("/api/clients", async (req, res) => {
   const { nom } = req.query;
-  if (!nom) return res.status(400).json({ error: "Paramètre 'nom' requis" });
 
   const { data, error } = await supabase
     .from("client")
@@ -104,10 +99,7 @@ app.get("/api/clients", async (req, res) => {
 app.post("/api/upload-photo", upload.single("image"), async (req, res) => {
   try {
     if (!req.file) {
-      return res.status(400).json({
-        step: "multer",
-        error: "Aucun fichier reçu"
-      });
+      return res.status(400).json({ step: "multer", error: "Aucun fichier" });
     }
 
     const {
@@ -128,10 +120,7 @@ app.post("/api/upload-photo", upload.single("image"), async (req, res) => {
       });
 
     if (storageError) {
-      return res.status(500).json({
-        step: "storage",
-        error: storageError.message
-      });
+      return res.status(500).json({ step: "storage", error: storageError.message });
     }
 
     const { data: urlData } = supabase.storage
@@ -152,30 +141,34 @@ app.post("/api/upload-photo", upload.single("image"), async (req, res) => {
       .select();
 
     if (dbError) {
-      return res.status(500).json({
-        step: "database",
-        error: dbError.message
-      });
+      return res.status(500).json({ step: "database", error: dbError.message });
     }
 
-    res.status(201).json({ success: true, data });
+    res.status(201).json(data);
 
   } catch (err) {
     res.status(500).json({ step: "unknown", error: err.message });
   }
 });
 
-// 📸 Liste des photos + filtres date
+// 📸 Liste photos (filtres + tri)
 app.get("/api/photos", async (req, res) => {
-  const { date_min, date_max } = req.query;
+  const {
+    date_min,
+    date_max,
+    order = "desc"
+  } = req.query;
 
   let query = supabase
     .from("photo")
-    .select("*")
-    .order("time_photo", { ascending: false });
+    .select("url, time_photo");
 
   if (date_min) query = query.gte("time_photo", date_min);
   if (date_max) query = query.lte("time_photo", date_max);
+
+  query = query.order("time_photo", {
+    ascending: order === "asc"
+  });
 
   const { data, error } = await query;
 
