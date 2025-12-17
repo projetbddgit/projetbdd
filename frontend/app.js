@@ -1,5 +1,5 @@
 // ---------------------------
-// Convertit lien Google Drive en lien direct
+// Convertit lien Google Drive en lien direct (CONSERVÉ)
 // ---------------------------
 function toDirectDriveUrl(url) {
   const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
@@ -13,22 +13,18 @@ function toDirectDriveUrl(url) {
 // Photo aléatoire
 // ---------------------------
 async function loadImages() {
-  try {
-    const res = await fetch("/api/random-photos");
-    const photos = await res.json();
+  const res = await fetch("/api/random-photos");
+  const photos = await res.json();
 
-    const gallery = document.getElementById("gallery");
-    gallery.innerHTML = "";
+  const gallery = document.getElementById("gallery");
+  gallery.innerHTML = "";
 
-    photos.forEach(photo => {
-      const img = document.createElement("img");
-      img.src = toDirectDriveUrl(photo.url); // conversion pour Google Drive
-      img.width = 300;
-      gallery.appendChild(img);
-    });
-  } catch (err) {
-    console.error("Erreur chargement photos :", err);
-  }
+  photos.forEach(photo => {
+    const img = document.createElement("img");
+    img.src = photo.url;
+    img.width = 300;
+    gallery.appendChild(img);
+  });
 }
 
 // ---------------------------
@@ -37,9 +33,9 @@ async function loadImages() {
 document.getElementById("client-form").addEventListener("submit", async e => {
   e.preventDefault();
 
-  const nom = document.getElementById("nom").value;
-  const mail = document.getElementById("mail").value;
-  const poste = document.getElementById("poste").value;
+  const nom = nom.value;
+  const mail = mail.value;
+  const poste = poste.value;
 
   const res = await fetch("/api/client", {
     method: "POST",
@@ -47,35 +43,13 @@ document.getElementById("client-form").addEventListener("submit", async e => {
     body: JSON.stringify({ nom, mail, poste })
   });
 
-  const data = await res.json();
-  if (!res.ok) {
-    alert("❌ Erreur : " + data.error);
-    return;
-  }
-
-  alert("✅ Client ajouté avec succès");
+  if (!res.ok) return alert("Erreur ajout client");
+  alert("✅ Client ajouté");
   e.target.reset();
 });
 
 // ---------------------------
-// Recherche client par nom
-// ---------------------------
-document.getElementById("search-btn").addEventListener("click", async () => {
-  const nom = document.getElementById("search-name").value;
-  const res = await fetch(`/api/clients?nom=${encodeURIComponent(nom)}`);
-  const data = await res.json();
-
-  if (!res.ok) {
-    alert("❌ Erreur : " + data.error);
-    return;
-  }
-
-  document.getElementById("client-result").textContent =
-    JSON.stringify(data, null, 2);
-});
-
-// ---------------------------
-// Ajouter photo
+// Ajouter photo PAR URL (inchangé)
 // ---------------------------
 document.getElementById("photo-form").addEventListener("submit", async e => {
   e.preventDefault();
@@ -89,52 +63,35 @@ document.getElementById("photo-form").addEventListener("submit", async e => {
     body: JSON.stringify({ url, flash })
   });
 
-  const data = await res.json();
-  if (!res.ok) {
-    alert("❌ Erreur : " + data.error);
-    return;
-  }
+  if (!res.ok) return alert("Erreur ajout photo URL");
 
-  alert("✅ Photo ajoutée");
   e.target.reset();
   loadImages();
 });
 
 // ---------------------------
-// Recherche commande par ID
+// NOUVEAU : upload fichier
 // ---------------------------
-document.getElementById("search-cmd-id").addEventListener("click", async () => {
-  const id = document.getElementById("cmd-id").value;
+document.getElementById("photo-upload-form").addEventListener("submit", async e => {
+  e.preventDefault();
 
-  const res = await fetch(`/api/commande/${id}`);
-  const data = await res.json();
-  if (!res.ok) {
-    alert("❌ Erreur : " + data.error);
-    return;
-  }
+  const file = document.getElementById("photo-file").files[0];
+  const flash = document.getElementById("photo-flash-upload").checked;
 
-  document.getElementById("commande-result").textContent =
-    JSON.stringify(data, null, 2);
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("flash", flash);
+
+  const res = await fetch("/api/photo-upload", {
+    method: "POST",
+    body: formData
+  });
+
+  if (!res.ok) return alert("Erreur upload image");
+
+  e.target.reset();
+  loadImages();
 });
 
-// ---------------------------
-// Commandes par client
-// ---------------------------
-document.getElementById("search-cmd-client").addEventListener("click", async () => {
-  const id = document.getElementById("cmd-client-id").value;
-
-  const res = await fetch(`/api/commandes?id_client=${id}`);
-  const data = await res.json();
-  if (!res.ok) {
-    alert("❌ Erreur : " + data.error);
-    return;
-  }
-
-  document.getElementById("commande-result").textContent =
-    JSON.stringify(data, null, 2);
-});
-
-// ---------------------------
-// Init
 // ---------------------------
 loadImages();

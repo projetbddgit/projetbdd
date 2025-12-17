@@ -1,6 +1,7 @@
 require("dotenv").config();
 const express = require("express");
 const path = require("path");
+const multer = require("multer");
 const { createClient } = require("@supabase/supabase-js");
 
 const app = express();
@@ -10,6 +11,7 @@ const PORT = process.env.PORT || 3000;
 // MIDDLEWARE
 // ---------------------------
 app.use(express.json());
+const upload = multer({ storage: multer.memoryStorage() });
 
 // ---------------------------
 // CONNECT SUPABASE
@@ -65,8 +67,6 @@ app.get("/api/random-photos", async (req, res) => {
 
 // ➕ Ajouter un client
 app.post("/api/client", async (req, res) => {
-  console.log("📩 Requête ajout client :", req.body);
-
   const { nom, mail, poste } = req.body;
   if (!nom || nom.trim() === "") {
     return res.status(400).json({ error: "Le nom est obligatoire" });
@@ -77,12 +77,7 @@ app.post("/api/client", async (req, res) => {
     .insert([{ nom: nom.trim(), mail: mail || null, poste: poste || null }])
     .select();
 
-  if (error) {
-    console.error("❌ Erreur Supabase INSERT client :", error);
-    return res.status(500).json({ error: error.message });
-  }
-
-  console.log("✅ Client inséré :", data);
+  if (error) return res.status(500).json({ error: error.message });
   res.status(201).json(data);
 });
 
@@ -100,10 +95,8 @@ app.get("/api/clients", async (req, res) => {
   res.json(data);
 });
 
-// 🖼 Ajouter une photo
+// 🖼 Ajouter une photo PAR URL (FONCTIONNALITÉ CONSERVÉE)
 app.post("/api/photo", async (req, res) => {
-  console.log("📩 Requête ajout photo :", req.body);
-
   const { url, flash } = req.body;
   if (!url) return res.status(400).json({ error: "URL obligatoire" });
 
@@ -113,9 +106,49 @@ app.post("/api/photo", async (req, res) => {
     .select();
 
   if (error) return res.status(500).json({ error: error.message });
-
-  console.log("✅ Photo insérée :", data);
   res.status(201).json(data);
+});
+
+// 🖼➕ NOUVEAU : upload fichier → bucket → table photo
+app.post("/api/photo-upload", upload.single("file"), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "Fichier manquant" });
+    }
+
+    const fileName = `${Date.now()}_${req.file.originalname}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("photos_bucket")
+      .upload(fileName, req.file.buffer, {
+        contentType: req.file.mimetype
+      });
+
+    if (uploadError) throw uploadError;
+
+    const { data: publicUrlData } = supabase.storage
+      .from("photos_bucket")
+      .getPublicUrl(fileName);
+
+    const imageUrl = publicUrlData.publicUrl;
+
+    const { data, error } = await supabase
+      .from("photo")
+      .insert([
+        {
+          url: imageUrl,
+          time_photo: new Date().toISOString(),
+          flash: req.body.flash === "true"
+        }
+      ])
+      .select();
+
+    if (error) throw error;
+
+    res.status(201).json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // 📦 Recherche commande par ID
