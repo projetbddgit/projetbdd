@@ -141,6 +141,27 @@ app.get("/api/photos", async (req, res) => {
   });
 });
 
+// 🔍 NOUVEAU : infos complètes d’une photo via URL
+app.get("/api/photo-by-url", async (req, res) => {
+  const { url } = req.query;
+
+  if (!url) {
+    return res.status(400).json({ error: "URL manquante" });
+  }
+
+  const { data, error } = await supabase
+    .from("photo")
+    .select("*")
+    .eq("url", url)
+    .single();
+
+  if (error) {
+    return res.status(404).json({ error: "Photo introuvable" });
+  }
+
+  res.json(data);
+});
+
 // ---------------------------
 // SERVE FRONTEND
 // ---------------------------

@@ -39,11 +39,6 @@ document.getElementById("upload-form").addEventListener("submit", async e => {
 
   alert("✅ Image uploadée");
   loadImages();
-
-  if (!document.getElementById("photo-section").hidden) {
-    currentPage = 1;
-    loadPhotoList();
-  }
 });
 
 // ---------------------------
@@ -74,7 +69,7 @@ async function loadPhotoList() {
 
     const img = document.createElement("img");
     img.src = p.url;
-    img.width = 250;
+    img.width = 200;
 
     const info = document.createElement("p");
     info.innerHTML = `
@@ -98,7 +93,7 @@ async function loadPhotoList() {
 }
 
 // ---------------------------
-// Pagination controls
+// Pagination
 // ---------------------------
 document.getElementById("prev").addEventListener("click", () => {
   currentPage--;
@@ -111,7 +106,37 @@ document.getElementById("next").addEventListener("click", () => {
 });
 
 // ---------------------------
-// Toggle affichage
+// Recherche par URL
+// ---------------------------
+document.getElementById("search-url-form").addEventListener("submit", async e => {
+  e.preventDefault();
+
+  const url = document.getElementById("search-url").value;
+  const res = await fetch(`/api/photo-by-url?url=${encodeURIComponent(url)}`);
+  const data = await res.json();
+
+  const container = document.getElementById("photo-details");
+  container.innerHTML = "";
+
+  if (!res.ok) {
+    container.textContent = "❌ Photo introuvable";
+    return;
+  }
+
+  container.innerHTML = `
+    <img src="${data.url}" width="300"><br>
+    <strong>URL :</strong> ${data.url}<br>
+    <strong>Date :</strong> ${new Date(data.time_photo).toLocaleString()}<br>
+    <strong>Focale :</strong> ${data.focale ?? "—"}<br>
+    <strong>Obturation :</strong> ${data.obturation ?? "—"}<br>
+    <strong>Flash :</strong> ${data.flash}<br>
+    <strong>Tag :</strong> ${data.tag ?? "—"}<br>
+    <strong>Type :</strong> ${data.type ?? "—"}
+  `;
+});
+
+// ---------------------------
+// Toggle liste
 // ---------------------------
 document.getElementById("toggle-photos").addEventListener("click", () => {
   const section = document.getElementById("photo-section");
@@ -122,12 +147,6 @@ document.getElementById("toggle-photos").addEventListener("click", () => {
     loadPhotoList();
   }
 });
-
-document.getElementById("filter-photos")
-  .addEventListener("click", () => {
-    currentPage = 1;
-    loadPhotoList();
-  });
 
 // ---------------------------
 // Init

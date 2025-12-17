@@ -34,6 +34,18 @@
   <button>Uploader</button>
 </form>
 
+<hr>
+
+<h2>Recherche d’une photo par URL</h2>
+<form id="search-url-form">
+  <input id="search-url" placeholder="URL de l’image" size="80" required>
+  <button>Rechercher</button>
+</form>
+
+<div id="photo-details"></div>
+
+<hr>
+
 <h2>Photos aléatoires</h2>
 <div id="gallery"></div>
 
@@ -55,7 +67,7 @@
     </select>
   </label>
 
-  <button id="filter-photos">Appliquer</button>
+  <button onclick="loadPhotoList()">Appliquer</button>
 
   <p id="pagination-info"></p>
 
