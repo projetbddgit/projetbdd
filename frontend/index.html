@@ -5,39 +5,39 @@
   <title>Application Photo</title>
 </head>
 <body>
-  <main>
-    <h1>Application Photo</h1>
+<main>
+  <h1>Application Photo</h1>
 
-    <h2>Ajouter un client</h2>
-    <form id="client-form">
-      <input id="nom" placeholder="Nom *" required />
-      <input id="mail" placeholder="Email" />
-      <input id="poste" placeholder="Code postal" />
-      <button>Ajouter</button>
-    </form>
+  <h2>Ajouter un client</h2>
+  <form id="client-form">
+    <input id="nom" placeholder="Nom *" required />
+    <input id="mail" placeholder="Email" />
+    <input id="poste" placeholder="Code postal" />
+    <button>Ajouter</button>
+  </form>
 
-    <h2>Recherche client</h2>
-    <input id="search-name" />
-    <button id="search-btn">Rechercher</button>
-    <pre id="client-result"></pre>
+  <h2>Recherche client</h2>
+  <input id="search-name" />
+  <button id="search-btn">Rechercher</button>
+  <pre id="client-result"></pre>
 
-    <h2>Ajouter une image (URL)</h2>
-    <form id="photo-form">
-      <input id="photo-url" required />
-      <label>Flash <input type="checkbox" id="photo-flash"></label>
-      <button>Ajouter</button>
-    </form>
+  <h2>Ajouter une image (URL)</h2>
+  <form id="photo-form">
+    <input id="photo-url" required />
+    <label>Flash <input type="checkbox" id="photo-flash"></label>
+    <button>Ajouter</button>
+  </form>
 
-    <h2>Uploader une image (bucket)</h2>
-    <form id="upload-form" enctype="multipart/form-data">
-      <input type="file" name="image" required />
-      <button>Uploader</button>
-    </form>
+  <h2>Uploader une image (bucket)</h2>
+  <form id="upload-form" enctype="multipart/form-data">
+    <input type="file" name="image" required />
+    <button>Uploader</button>
+  </form>
 
-    <h2>Photos</h2>
-    <div id="gallery"></div>
-  </main>
+  <h2>Photos</h2>
+  <div id="gallery"></div>
+</main>
 
-  <script src="app.js"></script>
+<script src="app.js"></script>
 </body>
 </html>

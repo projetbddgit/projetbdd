@@ -3,9 +3,7 @@
 // ---------------------------
 function toDirectDriveUrl(url) {
   const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
-  if (match && match[1]) {
-    return `https://drive.google.com/uc?export=view&id=${match[1]}`;
-  }
+  if (match && match[1]) return `https://drive.google.com/uc?export=view&id=${match[1]}`;
   return url;
 }
 
@@ -13,18 +11,22 @@ function toDirectDriveUrl(url) {
 // Photo aléatoire
 // ---------------------------
 async function loadImages() {
-  const res = await fetch("/api/random-photos");
-  const photos = await res.json();
+  try {
+    const res = await fetch("/api/random-photos");
+    const photos = await res.json();
 
-  const gallery = document.getElementById("gallery");
-  gallery.innerHTML = "";
+    const gallery = document.getElementById("gallery");
+    gallery.innerHTML = "";
 
-  photos.forEach(photo => {
-    const img = document.createElement("img");
-    img.src = photo.url;
-    img.width = 300;
-    gallery.appendChild(img);
-  });
+    photos.forEach(photo => {
+      const img = document.createElement("img");
+      img.src = photo.url;
+      img.width = 300;
+      gallery.appendChild(img);
+    });
+  } catch (err) {
+    console.error("Erreur chargement photos :", err);
+  }
 }
 
 // ---------------------------
@@ -32,7 +34,6 @@ async function loadImages() {
 // ---------------------------
 document.getElementById("client-form").addEventListener("submit", async e => {
   e.preventDefault();
-
   const nom = document.getElementById("nom").value;
   const mail = document.getElementById("mail").value;
   const poste = document.getElementById("poste").value;
@@ -45,7 +46,6 @@ document.getElementById("client-form").addEventListener("submit", async e => {
 
   const data = await res.json();
   if (!res.ok) return alert(data.error);
-
   alert("✅ Client ajouté");
   e.target.reset();
 });
@@ -57,9 +57,7 @@ document.getElementById("search-btn").addEventListener("click", async () => {
   const nom = document.getElementById("search-name").value;
   const res = await fetch(`/api/clients?nom=${encodeURIComponent(nom)}`);
   const data = await res.json();
-
-  document.getElementById("client-result").textContent =
-    JSON.stringify(data, null, 2);
+  document.getElementById("client-result").textContent = JSON.stringify(data, null, 2);
 });
 
 // ---------------------------
@@ -67,7 +65,6 @@ document.getElementById("search-btn").addEventListener("click", async () => {
 // ---------------------------
 document.getElementById("photo-form").addEventListener("submit", async e => {
   e.preventDefault();
-
   const url = toDirectDriveUrl(document.getElementById("photo-url").value);
   const flash = document.getElementById("photo-flash").checked;
 
@@ -79,32 +76,28 @@ document.getElementById("photo-form").addEventListener("submit", async e => {
 
   const data = await res.json();
   if (!res.ok) return alert(data.error);
-
   alert("✅ Photo ajoutée");
   e.target.reset();
   loadImages();
 });
 
 // ---------------------------
-// Upload image (bucket)
+// Upload photo bucket avec flash
 // ---------------------------
 document.getElementById("upload-form").addEventListener("submit", async e => {
   e.preventDefault();
-
   const formData = new FormData(e.target);
+  // ajoute flash
+  const flash = document.createElement("input");
+  flash.type = "hidden";
+  flash.name = "flash";
+  flash.value = document.getElementById("photo-flash")?.checked ?? false;
+  formData.append("flash", flash.value);
 
-  const res = await fetch("/api/upload-photo", {
-    method: "POST",
-    body: formData
-  });
-
+  const res = await fetch("/api/upload-photo", { method: "POST", body: formData });
   const data = await res.json();
 
-  if (!res.ok) {
-    alert(`Erreur (${data.step}) : ${data.error}`);
-    return;
-  }
-
+  if (!res.ok) return alert(`Erreur (${data.step}) : ${data.error}`);
   alert("✅ Image uploadée");
   loadImages();
 });

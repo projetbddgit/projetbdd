@@ -21,7 +21,7 @@ const upload = multer({
 // ---------------------------
 const supabase = createClient(
   process.env.SUPABASE_URL,
-  process.env.SUPABASE_KEY
+  process.env.SUPABASE_SERVICE_ROLE_KEY // IMPORTANT pour RLS et Storage
 );
 
 // ---------------------------
@@ -58,7 +58,7 @@ app.get("/api/random-photos", async (req, res) => {
   for (let offset of offsets) {
     const { data, error } = await supabase
       .from("photo")
-      .select("url")
+      .select("url, flash")
       .range(offset, offset);
 
     if (error) return res.status(500).json({ error: error.message });
@@ -70,8 +70,6 @@ app.get("/api/random-photos", async (req, res) => {
 
 // ➕ Ajouter un client
 app.post("/api/client", async (req, res) => {
-  console.log("📩 Requête ajout client :", req.body);
-
   const { nom, mail, poste } = req.body;
   if (!nom || nom.trim() === "") {
     return res.status(400).json({ error: "Le nom est obligatoire" });
@@ -82,10 +80,7 @@ app.post("/api/client", async (req, res) => {
     .insert([{ nom: nom.trim(), mail: mail || null, poste: poste || null }])
     .select();
 
-  if (error) {
-    console.error("❌ Erreur Supabase INSERT client :", error);
-    return res.status(500).json({ error: error.message });
-  }
+  if (error) return res.status(500).json({ error: error.message });
 
   res.status(201).json(data);
 });
@@ -104,10 +99,8 @@ app.get("/api/clients", async (req, res) => {
   res.json(data);
 });
 
-// 🖼 Ajouter une photo PAR URL (EXISTANT — INCHANGÉ)
+// 🖼 Ajouter une photo par URL
 app.post("/api/photo", async (req, res) => {
-  console.log("📩 Requête ajout photo (URL) :", req.body);
-
   const { url, flash } = req.body;
   if (!url) return res.status(400).json({ error: "URL obligatoire" });
 
@@ -117,36 +110,26 @@ app.post("/api/photo", async (req, res) => {
     .select();
 
   if (error) return res.status(500).json({ error: error.message });
-
   res.status(201).json(data);
 });
 
-// 🆕 Upload image vers Supabase Storage + insertion DB (AJOUT)
+// 🆕 Upload photo dans bucket + insertion DB
 app.post("/api/upload-photo", upload.single("image"), async (req, res) => {
-  console.log("📩 Upload image — requête reçue");
-
   try {
     if (!req.file) {
-      return res.status(400).json({
-        step: "multer",
-        error: "Aucun fichier reçu (champ image)"
-      });
+      return res.status(400).json({ step: "multer", error: "Aucun fichier reçu" });
     }
 
     const ext = req.file.originalname.split(".").pop();
     const fileName = `${Date.now()}.${ext}`;
+    const flash = req.body.flash === "true"; // checkbox flash
 
     const { error: storageError } = await supabase.storage
       .from("photos_bucket")
-      .upload(fileName, req.file.buffer, {
-        contentType: req.file.mimetype
-      });
+      .upload(fileName, req.file.buffer, { contentType: req.file.mimetype });
 
     if (storageError) {
-      return res.status(500).json({
-        step: "storage",
-        error: storageError.message
-      });
+      return res.status(500).json({ step: "storage", error: storageError.message });
     }
 
     const { data: urlData } = supabase.storage
@@ -154,46 +137,28 @@ app.post("/api/upload-photo", upload.single("image"), async (req, res) => {
       .getPublicUrl(fileName);
 
     if (!urlData?.publicUrl) {
-      return res.status(500).json({
-        step: "public_url",
-        error: "Impossible de récupérer l’URL publique"
-      });
+      return res.status(500).json({ step: "public_url", error: "Impossible de récupérer l’URL publique" });
     }
 
     const { data, error: dbError } = await supabase
       .from("photo")
-      .insert([{
-        url: urlData.publicUrl,
-        time_photo: new Date().toISOString(),
-        flash: false
-      }])
+      .insert([{ url: urlData.publicUrl, time_photo: new Date().toISOString(), flash }])
       .select();
 
     if (dbError) {
-      return res.status(500).json({
-        step: "database",
-        error: dbError.message
-      });
+      return res.status(500).json({ step: "database", error: dbError.message });
     }
 
-    res.status(201).json({
-      success: true,
-      url: urlData.publicUrl,
-      data
-    });
+    res.status(201).json({ success: true, url: urlData.publicUrl, data });
 
   } catch (err) {
-    res.status(500).json({
-      step: "unknown",
-      error: err.message
-    });
+    res.status(500).json({ step: "unknown", error: err.message });
   }
 });
 
 // 📦 Recherche commande par ID
 app.get("/api/commande/:id", async (req, res) => {
   const { id } = req.params;
-
   const { data, error } = await supabase
     .from("commande")
     .select("*")
@@ -204,7 +169,7 @@ app.get("/api/commande/:id", async (req, res) => {
   res.json(data);
 });
 
-// 📦 Recherche commandes d’un client
+// 📦 Commandes par client
 app.get("/api/commandes", async (req, res) => {
   const { id_client } = req.query;
   if (!id_client) return res.status(400).json({ error: "Paramètre id_client requis" });
@@ -224,13 +189,9 @@ app.get("/api/commandes", async (req, res) => {
 // ---------------------------
 const frontendPath = path.join(__dirname, "..", "frontend");
 app.use(express.static(frontendPath));
-app.get("*", (req, res) =>
-  res.sendFile(path.join(frontendPath, "index.html"))
-);
+app.get("*", (req, res) => res.sendFile(path.join(frontendPath, "index.html")));
 
 // ---------------------------
 // START SERVER
 // ---------------------------
-app.listen(PORT, () =>
-  console.log(`🚀 Backend running on port ${PORT}`)
-);
+app.listen(PORT, () => console.log(`🚀 Backend running on port ${PORT}`));
