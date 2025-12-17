@@ -1,8 +1,8 @@
 require("dotenv").config();
 const express = require("express");
 const path = require("path");
-const multer = require("multer");
 const { createClient } = require("@supabase/supabase-js");
+const multer = require("multer");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -12,17 +12,16 @@ const PORT = process.env.PORT || 3000;
 // ---------------------------
 app.use(express.json());
 
-// ---------------------------
-// MULTER (upload en mémoire)
-// ---------------------------
-const upload = multer({ storage: multer.memoryStorage() });
+const upload = multer({
+  storage: multer.memoryStorage()
+});
 
 // ---------------------------
 // CONNECT SUPABASE
 // ---------------------------
 const supabase = createClient(
   process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY // clé service role pour bypass RLS
+  process.env.SUPABASE_KEY
 );
 
 // ---------------------------
@@ -88,7 +87,6 @@ app.post("/api/client", async (req, res) => {
     return res.status(500).json({ error: error.message });
   }
 
-  console.log("✅ Client inséré :", data);
   res.status(201).json(data);
 });
 
@@ -106,67 +104,89 @@ app.get("/api/clients", async (req, res) => {
   res.json(data);
 });
 
-// 🖼 Ajouter une photo (upload fichier ou URL)
-app.post("/api/photo", upload.single("image"), async (req, res) => {
-  console.log("📩 Requête ajout photo :", req.body);
+// 🖼 Ajouter une photo PAR URL (EXISTANT — INCHANGÉ)
+app.post("/api/photo", async (req, res) => {
+  console.log("📩 Requête ajout photo (URL) :", req.body);
+
+  const { url, flash } = req.body;
+  if (!url) return res.status(400).json({ error: "URL obligatoire" });
+
+  const { data, error } = await supabase
+    .from("photo")
+    .insert([{ url, time_photo: new Date().toISOString(), flash: flash ?? false }])
+    .select();
+
+  if (error) return res.status(500).json({ error: error.message });
+
+  res.status(201).json(data);
+});
+
+// 🆕 Upload image vers Supabase Storage + insertion DB (AJOUT)
+app.post("/api/upload-photo", upload.single("image"), async (req, res) => {
+  console.log("📩 Upload image — requête reçue");
 
   try {
-    let imageUrl = req.body.url || null;
-    const flashValue = req.body.flash === "true" || req.body.flash === true;
-
-    // ---------------------------
-    // CAS 1 : upload fichier vers Supabase Storage
-    // ---------------------------
-    if (req.file) {
-      const ext = req.file.originalname.split(".").pop();
-      const fileName = `${Date.now()}.${ext}`;
-
-      const { error: storageError } = await supabase.storage
-        .from("photos_bucket")
-        .upload(fileName, req.file.buffer, {
-          contentType: req.file.mimetype,
-          upsert: false
-        });
-
-      if (storageError) {
-        console.error("❌ Erreur storage :", storageError);
-        return res.status(500).json({ step: "storage", error: storageError.message });
-      }
-
-      const { data: urlData } = supabase.storage
-        .from("photos_bucket")
-        .getPublicUrl(fileName);
-
-      if (!urlData?.publicUrl) {
-        return res.status(500).json({ step: "public_url", error: "Impossible de récupérer l’URL publique" });
-      }
-
-      imageUrl = urlData.publicUrl;
+    if (!req.file) {
+      return res.status(400).json({
+        step: "multer",
+        error: "Aucun fichier reçu (champ image)"
+      });
     }
 
-    if (!imageUrl) {
-      return res.status(400).json({ step: "input", error: "Aucune image fournie" });
+    const ext = req.file.originalname.split(".").pop();
+    const fileName = `${Date.now()}.${ext}`;
+
+    const { error: storageError } = await supabase.storage
+      .from("photos_bucket")
+      .upload(fileName, req.file.buffer, {
+        contentType: req.file.mimetype
+      });
+
+    if (storageError) {
+      return res.status(500).json({
+        step: "storage",
+        error: storageError.message
+      });
     }
 
-    // ---------------------------
-    // INSERTION TABLE photo
-    // ---------------------------
+    const { data: urlData } = supabase.storage
+      .from("photos_bucket")
+      .getPublicUrl(fileName);
+
+    if (!urlData?.publicUrl) {
+      return res.status(500).json({
+        step: "public_url",
+        error: "Impossible de récupérer l’URL publique"
+      });
+    }
+
     const { data, error: dbError } = await supabase
       .from("photo")
-      .insert([{ url: imageUrl, time_photo: new Date().toISOString(), flash: flashValue }])
+      .insert([{
+        url: urlData.publicUrl,
+        time_photo: new Date().toISOString(),
+        flash: false
+      }])
       .select();
 
     if (dbError) {
-      console.error("❌ Erreur INSERT table photo :", dbError);
-      return res.status(500).json({ step: "database", error: dbError.message });
+      return res.status(500).json({
+        step: "database",
+        error: dbError.message
+      });
     }
 
-    console.log("✅ Photo insérée :", data);
-    res.status(201).json({ success: true, url: imageUrl, data });
+    res.status(201).json({
+      success: true,
+      url: urlData.publicUrl,
+      data
+    });
 
   } catch (err) {
-    console.error("❌ Erreur inconnue :", err);
-    res.status(500).json({ step: "unknown", error: err.message });
+    res.status(500).json({
+      step: "unknown",
+      error: err.message
+    });
   }
 });
 
@@ -204,9 +224,13 @@ app.get("/api/commandes", async (req, res) => {
 // ---------------------------
 const frontendPath = path.join(__dirname, "..", "frontend");
 app.use(express.static(frontendPath));
-app.get("*", (req, res) => res.sendFile(path.join(frontendPath, "index.html")));
+app.get("*", (req, res) =>
+  res.sendFile(path.join(frontendPath, "index.html"))
+);
 
 // ---------------------------
 // START SERVER
 // ---------------------------
-app.listen(PORT, () => console.log(`🚀 Backend running on port ${PORT}`));
+app.listen(PORT, () =>
+  console.log(`🚀 Backend running on port ${PORT}`)
+);

@@ -13,22 +13,18 @@ function toDirectDriveUrl(url) {
 // Photo aléatoire
 // ---------------------------
 async function loadImages() {
-  try {
-    const res = await fetch("/api/random-photos");
-    const photos = await res.json();
+  const res = await fetch("/api/random-photos");
+  const photos = await res.json();
 
-    const gallery = document.getElementById("gallery");
-    gallery.innerHTML = "";
+  const gallery = document.getElementById("gallery");
+  gallery.innerHTML = "";
 
-    photos.forEach(photo => {
-      const img = document.createElement("img");
-      img.src = photo.url; // lien Supabase public
-      img.width = 300;
-      gallery.appendChild(img);
-    });
-  } catch (err) {
-    console.error("Erreur chargement photos :", err);
-  }
+  photos.forEach(photo => {
+    const img = document.createElement("img");
+    img.src = photo.url;
+    img.width = 300;
+    gallery.appendChild(img);
+  });
 }
 
 // ---------------------------
@@ -48,60 +44,41 @@ document.getElementById("client-form").addEventListener("submit", async e => {
   });
 
   const data = await res.json();
-  if (!res.ok) {
-    alert("❌ Erreur : " + data.error);
-    return;
-  }
+  if (!res.ok) return alert(data.error);
 
-  alert("✅ Client ajouté avec succès");
+  alert("✅ Client ajouté");
   e.target.reset();
 });
 
 // ---------------------------
-// Recherche client par nom
+// Recherche client
 // ---------------------------
 document.getElementById("search-btn").addEventListener("click", async () => {
   const nom = document.getElementById("search-name").value;
   const res = await fetch(`/api/clients?nom=${encodeURIComponent(nom)}`);
   const data = await res.json();
 
-  if (!res.ok) {
-    alert("❌ Erreur : " + data.error);
-    return;
-  }
-
   document.getElementById("client-result").textContent =
     JSON.stringify(data, null, 2);
 });
 
 // ---------------------------
-// Ajouter photo
+// Ajouter photo URL
 // ---------------------------
 document.getElementById("photo-form").addEventListener("submit", async e => {
   e.preventDefault();
 
-  const fileInput = document.getElementById("photo-file");
+  const url = toDirectDriveUrl(document.getElementById("photo-url").value);
   const flash = document.getElementById("photo-flash").checked;
-
-  if (!fileInput.files.length) {
-    alert("❌ Sélectionne une image");
-    return;
-  }
-
-  const formData = new FormData();
-  formData.append("image", fileInput.files[0]);
-  formData.append("flash", flash);
 
   const res = await fetch("/api/photo", {
     method: "POST",
-    body: formData
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ url, flash })
   });
 
   const data = await res.json();
-  if (!res.ok) {
-    alert("❌ Erreur : " + JSON.stringify(data));
-    return;
-  }
+  if (!res.ok) return alert(data.error);
 
   alert("✅ Photo ajoutée");
   e.target.reset();
@@ -109,37 +86,27 @@ document.getElementById("photo-form").addEventListener("submit", async e => {
 });
 
 // ---------------------------
-// Recherche commande par ID
+// Upload image (bucket)
 // ---------------------------
-document.getElementById("search-cmd-id").addEventListener("click", async () => {
-  const id = document.getElementById("cmd-id").value;
+document.getElementById("upload-form").addEventListener("submit", async e => {
+  e.preventDefault();
 
-  const res = await fetch(`/api/commande/${id}`);
+  const formData = new FormData(e.target);
+
+  const res = await fetch("/api/upload-photo", {
+    method: "POST",
+    body: formData
+  });
+
   const data = await res.json();
+
   if (!res.ok) {
-    alert("❌ Erreur : " + JSON.stringify(data));
+    alert(`Erreur (${data.step}) : ${data.error}`);
     return;
   }
 
-  document.getElementById("commande-result").textContent =
-    JSON.stringify(data, null, 2);
-});
-
-// ---------------------------
-// Commandes par client
-// ---------------------------
-document.getElementById("search-cmd-client").addEventListener("click", async () => {
-  const id = document.getElementById("cmd-client-id").value;
-
-  const res = await fetch(`/api/commandes?id_client=${id}`);
-  const data = await res.json();
-  if (!res.ok) {
-    alert("❌ Erreur : " + JSON.stringify(data));
-    return;
-  }
-
-  document.getElementById("commande-result").textContent =
-    JSON.stringify(data, null, 2);
+  alert("✅ Image uploadée");
+  loadImages();
 });
 
 // ---------------------------
