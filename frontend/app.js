@@ -1,4 +1,5 @@
 let currentPage = 1;
+let materielPage = 1;
 const limit = 10;
 
 // ---------------------------
@@ -92,21 +93,18 @@ async function loadPhotoList() {
   document.getElementById("next").disabled = end >= total;
 }
 
-// ---------------------------
-// Pagination
-// ---------------------------
+// Pagination photos
 document.getElementById("prev").addEventListener("click", () => {
   currentPage--;
   loadPhotoList();
 });
-
 document.getElementById("next").addEventListener("click", () => {
   currentPage++;
   loadPhotoList();
 });
 
 // ---------------------------
-// Recherche par URL
+// Recherche photo par URL
 // ---------------------------
 document.getElementById("search-url-form").addEventListener("submit", async e => {
   e.preventDefault();
@@ -125,61 +123,91 @@ document.getElementById("search-url-form").addEventListener("submit", async e =>
 
   container.innerHTML = `
     <img src="${data.url}" width="300"><br>
-    <strong>URL :</strong> ${data.url}<br>
-    <strong>Date :</strong> ${new Date(data.time_photo).toLocaleString()}<br>
-    <strong>Focale :</strong> ${data.focale ?? "Pas encore"}<br>
-    <strong>Obturation :</strong> ${data.obturation ?? "Pas encore"}<br>
-    <strong>Flash :</strong> ${data.flash}<br>
-    <strong>Tag :</strong> ${data.tag ?? "Pas encore"}<br>
-    <strong>Type :</strong> ${data.type ?? "Pas encore"}
+    <pre>${JSON.stringify(data, null, 2)}</pre>
   `;
 });
 
 // ---------------------------
-// Toggle liste photos
+// MATÉRIEL — LISTE
 // ---------------------------
-document.getElementById("toggle-photos").addEventListener("click", () => {
-  const section = document.getElementById("photo-section");
-  section.hidden = !section.hidden;
+async function loadMaterielList() {
+  const order = document.getElementById("materiel-order").value;
 
-  if (!section.hidden) {
+  const res = await fetch(
+    `/api/materiels?page=${materielPage}&limit=${limit}&order=${order}`
+  );
+  const { materiels, total } = await res.json();
+
+  const container = document.getElementById("materiel-list");
+  container.innerHTML = "";
+
+  materiels.forEach(m => {
+    container.innerHTML += `
+      <p>
+        <strong>Modèle :</strong> ${m.modele_mat}<br>
+        <strong>Numéro :</strong> ${m.num_mat}<br>
+        <strong>Date :</strong> ${new Date(m.date_acq).toLocaleDateString()}
+      </p>
+    `;
+  });
+
+  const start = (materielPage - 1) * limit + 1;
+  const end = Math.min(materielPage * limit, total);
+
+  document.getElementById("materiel-info").textContent =
+    `${start} à ${end} sur ${total} matériels`;
+
+  document.getElementById("mat-prev").disabled = materielPage === 1;
+  document.getElementById("mat-next").disabled = end >= total;
+}
+
+document.getElementById("mat-prev").onclick = () => {
+  materielPage--;
+  loadMaterielList();
+};
+document.getElementById("mat-next").onclick = () => {
+  materielPage++;
+  loadMaterielList();
+};
+
+// ---------------------------
+// MATÉRIEL — DÉTAIL
+// ---------------------------
+document.getElementById("materiel-search-form").addEventListener("submit", async e => {
+  e.preventDefault();
+
+  const modele = document.getElementById("modele_mat").value;
+  const num = document.getElementById("num_mat").value;
+
+  const res = await fetch(
+    `/api/materiel-detail?modele_mat=${encodeURIComponent(modele)}&num_mat=${encodeURIComponent(num)}`
+  );
+  const data = await res.json();
+
+  document.getElementById("materiel-detail").innerHTML =
+    res.ok ? `<pre>${JSON.stringify(data, null, 2)}</pre>` : "❌ Introuvable";
+});
+
+// ---------------------------
+// Toggles
+// ---------------------------
+document.getElementById("toggle-photos").onclick = () => {
+  const s = document.getElementById("photo-section");
+  s.hidden = !s.hidden;
+  if (!s.hidden) {
     currentPage = 1;
     loadPhotoList();
   }
-});
+};
 
-// ---------------------------
-// Recherche infos materiel
-// ---------------------------
-document.getElementById("search-materiel-form").addEventListener("submit", async e => {
-  e.preventDefault();
-
-  const modele = document.getElementById("modele-mat").value;
-  const num = document.getElementById("num-mat").value;
-
-  const res = await fetch(`/api/materiel?modele=${encodeURIComponent(modele)}&num=${encodeURIComponent(num)}`);
-  const data = await res.json();
-
-  const container = document.getElementById("materiel-details");
-  container.innerHTML = "";
-
-  if (!res.ok) {
-    container.textContent = "❌ Matériel introuvable";
-    return;
+document.getElementById("toggle-materiel").onclick = () => {
+  const s = document.getElementById("materiel-section");
+  s.hidden = !s.hidden;
+  if (!s.hidden) {
+    materielPage = 1;
+    loadMaterielList();
   }
+};
 
-  container.innerHTML = `
-    <strong>Modèle :</strong> ${data.modele_mat}<br>
-    <strong>Numéro de série :</strong> ${data.num_mat}<br>
-    <strong>Prix :</strong> ${data.prix_mat ?? "Pas encore"}<br>
-    <strong>Poids en g :</strong> ${data.poids ?? "Pas encore"}<br>
-    <strong>Date d'achat :</strong> ${data.date_acq ? new Date(data.date_acq).toLocaleDateString() : "Pas encore"}<br>
-    <strong>Date de dernière révision :</strong> ${data.date_rev ? new Date(data.date_rev).toLocaleDateString() : "Pas encore"}<br>
-    <strong>Date d'arrêt de l'utilisation :</strong> ${data.date_rec ? new Date(data.date_rec).toLocaleDateString() : "Pas encore"}
-  `;
-});
-
-// ---------------------------
-// Init
 // ---------------------------
 loadImages();
