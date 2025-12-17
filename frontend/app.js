@@ -184,8 +184,24 @@ document.getElementById("materiel-search-form").addEventListener("submit", async
   );
   const data = await res.json();
 
-  document.getElementById("materiel-detail").innerHTML =
-    res.ok ? `<pre>${JSON.stringify(data, null, 2)}</pre>` : "❌ Introuvable";
+  const container = document.getElementById("materiel-detail");
+  container.innerHTML = "";
+
+  if (!res.ok) {
+    container.textContent = "❌ Matériel introuvable";
+    return;
+  }
+
+  // --- SEULE MODIFICATION : affichage formaté selon ta demande ---
+  container.innerHTML = `
+    <strong>Modèle :</strong> ${data.modele_mat}<br>
+    <strong>Numéro de série :</strong> ${data.num_mat}<br>
+    <strong>Prix :</strong> ${data.prix_mat ?? "Pas encore"}<br>
+    <strong>Poids en g :</strong> ${data.poids ?? "Pas encore"}<br>
+    <strong>Date d'achat :</strong> ${data.date_acq ? new Date(data.date_acq).toLocaleDateString() : "Pas encore"}<br>
+    <strong>Date de dernière révision :</strong> ${data.date_rev ? new Date(data.date_rev).toLocaleDateString() : "Pas encore"}<br>
+    <strong>Date d'arrêt de l'utilisation :</strong> ${data.date_rec ? new Date(data.date_rec).toLocaleDateString() : "Pas encore"}
+  `;
 });
 
 // ---------------------------
