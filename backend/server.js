@@ -12,9 +12,7 @@ const PORT = process.env.PORT || 3000;
 // ---------------------------
 app.use(express.json());
 
-const upload = multer({
-  storage: multer.memoryStorage()
-});
+const upload = multer({ storage: multer.memoryStorage() });
 
 // ---------------------------
 // CONNECT SUPABASE
@@ -58,7 +56,7 @@ app.get("/api/random-photos", async (req, res) => {
   for (let offset of offsets) {
     const { data, error } = await supabase
       .from("photo")
-      .select("url, flash")
+      .select("*")
       .range(offset, offset);
 
     if (error) return res.status(500).json({ error: error.message });
@@ -71,9 +69,7 @@ app.get("/api/random-photos", async (req, res) => {
 // ➕ Ajouter un client
 app.post("/api/client", async (req, res) => {
   const { nom, mail, poste } = req.body;
-  if (!nom || nom.trim() === "") {
-    return res.status(400).json({ error: "Le nom est obligatoire" });
-  }
+  if (!nom || nom.trim() === "") return res.status(400).json({ error: "Le nom est obligatoire" });
 
   const { data, error } = await supabase
     .from("client")
@@ -81,7 +77,6 @@ app.post("/api/client", async (req, res) => {
     .select();
 
   if (error) return res.status(500).json({ error: error.message });
-
   res.status(201).json(data);
 });
 
@@ -99,14 +94,18 @@ app.get("/api/clients", async (req, res) => {
   res.json(data);
 });
 
-// 🆕 Upload photo dans bucket + insertion DB
+// 🆕 Upload photo + insertion DB avec champs complets
 app.post("/api/upload-photo", upload.single("image"), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ step: "multer", error: "Aucun fichier reçu" });
 
-    const ext = req.file.originalname.split(".").pop();
-    const fileName = `${Date.now()}.${ext}`;
-    const flash = req.body.flash === "true"; // checkbox flash
+    const fileName = `${Date.now()}-${req.file.originalname}`;
+    const flash = req.body.flash === "true";
+    const focale = req.body.focale ? parseFloat(req.body.focale) : null;
+    const obturation = req.body.obturation ? parseFloat(req.body.obturation) : null;
+    const gps = req.body.gps ? `(${req.body.gps})` : null; // Supabase accepte format '(x,y)'
+    const tag = req.body.tag || '';
+    const type = req.body.type || '';
 
     const { error: storageError } = await supabase.storage
       .from("photos_bucket")
@@ -122,7 +121,16 @@ app.post("/api/upload-photo", upload.single("image"), async (req, res) => {
 
     const { data, error: dbError } = await supabase
       .from("photo")
-      .insert([{ url: urlData.publicUrl, time_photo: new Date().toISOString(), flash }])
+      .insert([{
+        url: urlData.publicUrl,
+        time_photo: new Date().toISOString(),
+        focale,
+        obturation,
+        gps,
+        flash,
+        tag,
+        type
+      }])
       .select();
 
     if (dbError) return res.status(500).json({ step: "database", error: dbError.message });

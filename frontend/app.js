@@ -52,22 +52,17 @@ document.getElementById("search-btn").addEventListener("click", async () => {
 });
 
 // ---------------------------
-// Upload photo bucket avec flash
+// Upload photo bucket + infos
 // ---------------------------
 document.getElementById("upload-form").addEventListener("submit", async e => {
   e.preventDefault();
   const formData = new FormData(e.target);
-  const flash = document.createElement("input");
-  flash.type = "hidden";
-  flash.name = "flash";
-  flash.value = document.getElementById("photo-flash")?.checked ?? false;
-  formData.append("flash", flash.value);
 
   const res = await fetch("/api/upload-photo", { method: "POST", body: formData });
   const data = await res.json();
 
   if (!res.ok) return alert(`Erreur (${data.step}) : ${data.error}`);
-  alert("✅ Image uploadée");
+  alert("✅ Image uploadée avec infos");
   loadImages();
 });
 

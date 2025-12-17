@@ -22,9 +22,22 @@
   <pre id="client-result"></pre>
 
   <h2>Uploader une image (bucket)</h2>
-  <label>Flash <input type="checkbox" id="photo-flash"></label>
   <form id="upload-form" enctype="multipart/form-data">
     <input type="file" name="image" required />
+    <label>Flash <input type="checkbox" name="flash" id="photo-flash"></label>
+    <input type="text" name="focale" placeholder="Focale" />
+    <input type="text" name="obturation" placeholder="Obturation" />
+    <input type="text" name="gps" placeholder="GPS (x,y)" />
+    <select name="tag">
+      <option value="">--Tag--</option>
+      <option value="ratee">ratee</option>
+    </select>
+    <select name="type">
+      <option value="">--Type--</option>
+      <option value="commande">commande</option>
+      <option value="personnel">personnel</option>
+      <option value="test">test</option>
+    </select>
     <button>Uploader</button>
   </form>
 
