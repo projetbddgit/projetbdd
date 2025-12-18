@@ -247,6 +247,7 @@ app.use(express.static(frontendPath));
 app.get("*", (req, res) =>
   res.sendFile(path.join(frontendPath, "index.html"))
 );
+
 // ---------------------------
 // COMMANDE — Gestion des images
 // ---------------------------

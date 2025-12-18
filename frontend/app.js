@@ -269,6 +269,7 @@ document.getElementById("toggle-commandes").onclick = () => {
   s.hidden = !s.hidden;
   if (!s.hidden) { commandePage = 1; loadCommandeList(); }
 };
+
 // ---------------------------
 // Commande — Ajouter/Changer/Supprimer image
 // ---------------------------
@@ -334,42 +335,5 @@ document.getElementById("commande-search-form").addEventListener("submit", async
 });
 
 // ---------------------------
-function renderCommandeFolders(photos, num_cmd) {
-  const container = document.getElementById("commande-photo-list");
-  container.innerHTML = "";
-
-  const statuses = ["a_trier", "selectionnee", "validee", "envoyee"];
-
-  statuses.forEach(status => {
-    const section = document.createElement("div");
-    section.innerHTML = `<h3>📂 ${status}</h3>`;
-    
-    photos
-      .filter(p => p.status === status)
-      .forEach(p => {
-        const div = document.createElement("div");
-
-        div.innerHTML = `
-          <img src="${p.photo.url}" width="150"><br>
-          <button onclick="updatePhotoStatus('${p.photo.url}', '${num_cmd}', '${status}')">🔄</button>
-          <button onclick="removePhotoFromCommande('${p.photo.url}', '${num_cmd}')">❌</button>
-        `;
-
-        section.appendChild(div);
-      });
-
-    container.appendChild(section);
-  });
-}
-document.getElementById("commande-photo-form").addEventListener("submit", async e => {
-  e.preventDefault();
-
-  const num_cmd = document.getElementById("cmd-photo-num").value;
-  const url = document.getElementById("cmd-photo-url").value;
-  const status = document.getElementById("cmd-photo-status").value;
-
-  await addPhotoToCommande(url, num_cmd, status);
-  loadCommandePhotos(num_cmd);
-});
 
 loadImages();
