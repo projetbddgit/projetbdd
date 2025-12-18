@@ -351,7 +351,7 @@ document.getElementById("commande-search-photo-form").addEventListener("submit",
   loadCommandePhotos(num_cmd);
 });
 
-// Étape 2 : Ajouter une nouvelle image
+// Étape 2 : Ajouter ou mettre à jour une image
 document.getElementById("commande-add-photo-form").addEventListener("submit", async e => {
   e.preventDefault();
   const url = document.getElementById("cmd-photo-url").value;
@@ -421,8 +421,8 @@ async function loadCommandePhotos(num_cmd) {
     info.innerHTML = `
       <strong>URL :</strong> ${p.photo.url}<br>
       <strong>Date :</strong> ${new Date(p.photo.time_photo).toLocaleString()}<br>
-      <strong>Status :</strong> <input type="text" value="${p.status}" id="status-${p.photo.url}">
-      <button id="update-${p.photo.url}">Modifier status</button><br>
+      <strong>Status :</strong> <input type="text" value="${p.status}" id="status-${p.photo.url}"><br>
+      <button id="update-${p.photo.url}">Modifier status</button>
       <button id="delete-${p.photo.url}">Supprimer</button>
     `;
 
