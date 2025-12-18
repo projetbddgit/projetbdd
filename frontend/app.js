@@ -336,4 +336,103 @@ document.getElementById("commande-search-form").addEventListener("submit", async
 
 // ---------------------------
 
+// ---------------------------
+// COMMANDES — Ajouter/Modifier/Supprimer image d'une commande
+// ---------------------------
+document.getElementById("commande-photo-form").addEventListener("submit", async e => {
+  e.preventDefault();
+
+  const num_cmd = document.getElementById("cmd-photo-num").value;
+  const url = document.getElementById("cmd-photo-url").value;
+  const status = document.getElementById("cmd-photo-status").value;
+
+  // Vérifier si l'image existe déjà pour cette commande
+  const resCheck = await fetch(`/api/commande-photos?num_cmd=${num_cmd}`);
+  const photos = await resCheck.json();
+  const exists = photos.some(p => p.photo.url === url);
+
+  if (exists) {
+    // Si existe, on met à jour le status
+    await fetch("/api/commande-photo", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ num_cmd, url, status })
+    });
+    alert("✅ Status mis à jour pour cette image");
+  } else {
+    // Sinon, on ajoute l'image
+    await fetch("/api/commande-photo", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ num_cmd, url, status })
+    });
+    alert("✅ Image ajoutée à la commande");
+  }
+
+  loadCommandePhotos(num_cmd);
+});
+
+// Fonction pour supprimer une image
+async function deleteCommandePhoto(url, num_cmd) {
+  if (!confirm("Supprimer cette image de la commande ?")) return;
+
+  await fetch("/api/commande-photo", {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ num_cmd, url })
+  });
+
+  alert("❌ Image supprimée");
+  loadCommandePhotos(num_cmd);
+}
+
+// Mise à jour de l'affichage des images d'une commande avec bouton supprimer et changer status
+async function loadCommandePhotos(num_cmd) {
+  const res = await fetch(`/api/commande-photos?num_cmd=${num_cmd}`);
+  const photos = await res.json();
+
+  const container = document.getElementById("commande-photo-list");
+  container.innerHTML = "";
+
+  photos.forEach(p => {
+    const div = document.createElement("div");
+    div.style.border = "1px solid #ccc";
+    div.style.margin = "5px";
+    div.style.padding = "5px";
+
+    const img = document.createElement("img");
+    img.src = p.photo.url;
+    img.width = 150;
+
+    const info = document.createElement("p");
+    info.innerHTML = `
+      <strong>URL :</strong> ${p.photo.url}<br>
+      <strong>Date :</strong> ${new Date(p.photo.time_photo).toLocaleString()}<br>
+      <strong>Status :</strong> <input type="text" value="${p.status}" id="status-${p.photo.url}">
+      <button id="update-${p.photo.url}">Modifier status</button><br>
+      <strong>Commande :</strong> #${p.commande.num_cmd}<br>
+      <button id="delete-${p.photo.url}">Supprimer</button>
+    `;
+
+    div.appendChild(img);
+    div.appendChild(info);
+    container.appendChild(div);
+
+    // Bouton modifier status
+    document.getElementById(`update-${p.photo.url}`).onclick = async () => {
+      const newStatus = document.getElementById(`status-${p.photo.url}`).value;
+      await fetch("/api/commande-photo", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ num_cmd, url: p.photo.url, status: newStatus })
+      });
+      alert("✅ Status mis à jour");
+      loadCommandePhotos(num_cmd);
+    };
+
+    // Bouton supprimer
+    document.getElementById(`delete-${p.photo.url}`).onclick = () => deleteCommandePhoto(p.photo.url, num_cmd);
+  });
+}
+
 loadImages();
