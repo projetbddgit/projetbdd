@@ -57,44 +57,6 @@
   <div id="photo-list"></div>
 </section>
 
-<hr>
-
-<h2>Gestion des images d'une commande</h2>
-
-<!-- Sélection de la commande -->
-<form id="commande-image-form">
-  <input id="cmd-img-num" placeholder="Numéro de commande" required>
-  <input id="cmd-img-url" placeholder="URL de l'image" required>
-
-  <select id="cmd-img-status" required>
-    <option value="">Statut</option>
-    <option value="a_trier">À trier</option>
-    <option value="selectionnee">Sélectionnée</option>
-    <option value="validee">Validée</option>
-    <option value="envoyee">Envoyée</option>
-  </select>
-
-  <button>Ajouter l'image à la commande</button>
-</form>
-
-<hr>
-
-<!-- Dossiers / statuts -->
-<div id="commande-images">
-
-  <h3>📂 À trier</h3>
-  <div class="folder" id="folder-a_trier"></div>
-
-  <h3>📂 Sélectionnées</h3>
-  <div class="folder" id="folder-selectionnee"></div>
-
-  <h3>📂 Validées</h3>
-  <div class="folder" id="folder-validee"></div>
-
-  <h3>📂 Envoyées</h3>
-  <div class="folder" id="folder-envoyee"></div>
-
-</div>
 
 
 <script src="app.js"></script>

@@ -334,17 +334,5 @@ document.getElementById("commande-search-form").addEventListener("submit", async
 });
 
 // ---------------------------
-<div class="commande-image">
-  <img src="..." width="150">
-
-  <div class="actions">
-    <button data-status="a_trier">📂</button>
-    <button data-status="selectionnee">📂</button>
-    <button data-status="validee">📂</button>
-    <button data-status="envoyee">📂</button>
-
-    <button class="delete">❌</button>
-  </div>
-</div>
 
 loadImages();
