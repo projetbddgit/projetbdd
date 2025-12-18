@@ -336,57 +336,70 @@ document.getElementById("commande-search-form").addEventListener("submit", async
 
 // ---------------------------
 
-// ---------------------------
-// COMMANDES — Ajouter/Modifier/Supprimer image d'une commande
-// ---------------------------
-document.getElementById("commande-photo-form").addEventListener("submit", async e => {
-  e.preventDefault();
+let currentCommandeNum = null;
 
-  const num_cmd = document.getElementById("cmd-photo-num").value;
+// Étape 1 : Entrer numéro de commande
+document.getElementById("commande-search-photo-form").addEventListener("submit", async e => {
+  e.preventDefault();
+  const num_cmd = document.getElementById("cmd-num").value;
+  currentCommandeNum = num_cmd;
+
+  document.getElementById("commande-num-display").textContent = num_cmd;
+  document.getElementById("commande-photo-section").hidden = false;
+
+  // Charger toutes les images existantes
+  loadCommandePhotos(num_cmd);
+});
+
+// Étape 2 : Ajouter une nouvelle image
+document.getElementById("commande-add-photo-form").addEventListener("submit", async e => {
+  e.preventDefault();
   const url = document.getElementById("cmd-photo-url").value;
   const status = document.getElementById("cmd-photo-status").value;
 
-  // Vérifier si l'image existe déjà pour cette commande
-  const resCheck = await fetch(`/api/commande-photos?num_cmd=${num_cmd}`);
+  if (!currentCommandeNum) return alert("Numéro de commande manquant");
+
+  // Vérifier si l'image existe déjà
+  const resCheck = await fetch(`/api/commande-photos?num_cmd=${currentCommandeNum}`);
   const photos = await resCheck.json();
   const exists = photos.some(p => p.photo.url === url);
 
   if (exists) {
-    // Si existe, on met à jour le status
     await fetch("/api/commande-photo", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ num_cmd, url, status })
+      body: JSON.stringify({ num_cmd: currentCommandeNum, url, status })
     });
     alert("✅ Status mis à jour pour cette image");
   } else {
-    // Sinon, on ajoute l'image
     await fetch("/api/commande-photo", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ num_cmd, url, status })
+      body: JSON.stringify({ num_cmd: currentCommandeNum, url, status })
     });
     alert("✅ Image ajoutée à la commande");
   }
 
-  loadCommandePhotos(num_cmd);
+  // Réafficher la liste
+  loadCommandePhotos(currentCommandeNum);
 });
 
 // Fonction pour supprimer une image
-async function deleteCommandePhoto(url, num_cmd) {
+async function deleteCommandePhoto(url) {
+  if (!currentCommandeNum) return;
   if (!confirm("Supprimer cette image de la commande ?")) return;
 
   await fetch("/api/commande-photo", {
     method: "DELETE",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ num_cmd, url })
+    body: JSON.stringify({ num_cmd: currentCommandeNum, url })
   });
 
   alert("❌ Image supprimée");
-  loadCommandePhotos(num_cmd);
+  loadCommandePhotos(currentCommandeNum);
 }
 
-// Mise à jour de l'affichage des images d'une commande avec bouton supprimer et changer status
+// Fonction pour afficher les images avec leurs status et boutons action
 async function loadCommandePhotos(num_cmd) {
   const res = await fetch(`/api/commande-photos?num_cmd=${num_cmd}`);
   const photos = await res.json();
@@ -410,7 +423,6 @@ async function loadCommandePhotos(num_cmd) {
       <strong>Date :</strong> ${new Date(p.photo.time_photo).toLocaleString()}<br>
       <strong>Status :</strong> <input type="text" value="${p.status}" id="status-${p.photo.url}">
       <button id="update-${p.photo.url}">Modifier status</button><br>
-      <strong>Commande :</strong> #${p.commande.num_cmd}<br>
       <button id="delete-${p.photo.url}">Supprimer</button>
     `;
 
@@ -418,7 +430,7 @@ async function loadCommandePhotos(num_cmd) {
     div.appendChild(info);
     container.appendChild(div);
 
-    // Bouton modifier status
+    // Modifier status
     document.getElementById(`update-${p.photo.url}`).onclick = async () => {
       const newStatus = document.getElementById(`status-${p.photo.url}`).value;
       await fetch("/api/commande-photo", {
@@ -430,9 +442,10 @@ async function loadCommandePhotos(num_cmd) {
       loadCommandePhotos(num_cmd);
     };
 
-    // Bouton supprimer
-    document.getElementById(`delete-${p.photo.url}`).onclick = () => deleteCommandePhoto(p.photo.url, num_cmd);
+    // Supprimer image
+    document.getElementById(`delete-${p.photo.url}`).onclick = () => deleteCommandePhoto(p.photo.url);
   });
 }
+
 
 loadImages();

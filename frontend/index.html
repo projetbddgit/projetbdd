@@ -112,6 +112,29 @@
 
 <div id="commande-photo-list"></div>
 
+<h2>Gestion des images d'une commande</h2>
+
+<!-- Étape 1 : Entrer le numéro de commande -->
+<form id="commande-search-photo-form">
+  <input id="cmd-num" placeholder="Numéro de commande" required>
+  <button type="submit">Valider</button>
+</form>
+
+<!-- Étape 2 : Gestion des images -->
+<section id="commande-photo-section" hidden>
+  <h3>Images de la commande <span id="commande-num-display"></span></h3>
+
+  <div id="commande-photo-list"></div>
+
+  <h4>Ajouter une nouvelle image</h4>
+  <form id="commande-add-photo-form">
+    <input id="cmd-photo-url" placeholder="URL de l'image" required>
+    <input id="cmd-photo-status" placeholder="Status">
+    <button type="submit">Ajouter</button>
+  </form>
+</section>
+
+
 <script src="app.js"></script>
 </body>
 </html>
