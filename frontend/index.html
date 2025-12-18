@@ -57,7 +57,60 @@
   <div id="photo-list"></div>
 </section>
 
+<hr>
+<button id="toggle-materiel">🛠️ Afficher / masquer le matériel</button>
+<section id="materiel-section" hidden>
+  <select id="materiel-order">
+    <option value="desc">Date décroissante</option>
+    <option value="asc">Date croissante</option>
+  </select>
+  <p id="materiel-info"></p>
+  <button id="mat-prev">⬅️</button>
+  <button id="mat-next">➡️</button>
+  <div id="materiel-list"></div>
+</section>
 
+<hr>
+<h2>Détails matériel</h2>
+<form id="materiel-search-form">
+  <input id="modele_mat" placeholder="Modèle" required>
+  <input id="num_mat" placeholder="Numéro" required>
+  <button>Rechercher</button>
+</form>
+<div id="materiel-detail"></div>
+
+<hr>
+<button id="toggle-commandes">📄 Afficher / masquer les commandes</button>
+<section id="commande-section" hidden>
+  <select id="commande-order">
+    <option value="desc">Date décroissante</option>
+    <option value="asc">Date croissante</option>
+  </select>
+  <p id="commande-info"></p>
+  <button id="cmd-prev">⬅️</button>
+  <button id="cmd-next">➡️</button>
+  <div id="commande-list"></div>
+</section>
+
+<hr>
+<h2>Détails commande</h2>
+<form id="commande-search-form">
+  <input id="num_cmd" placeholder="Numéro de commande" required>
+  <button>Rechercher</button>
+</form>
+<div id="commande-detail"></div>
+<hr>
+
+<h2>Gestion des images d'une commande</h2>
+
+<form id="commande-photo-form">
+  <input id="cmd-photo-num" placeholder="Numéro de commande" required>
+  <input id="cmd-photo-url" placeholder="URL de l'image" required>
+  <input id="cmd-photo-status" placeholder="Status">
+  <button type="submit">Ajouter / Mettre à jour</button>
+</form>
+
+<div id="commande-photo-list"></div>
 
 <script src="app.js"></script>
 </body>
